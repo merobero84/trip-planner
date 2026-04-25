@@ -26,6 +26,32 @@ nav{background:var(--forest);padding:0 1.5rem;display:flex;align-items:center;ga
 .logo{font-size:1.1rem;font-weight:600;color:#fff;letter-spacing:-0.02em}
 .logo em{color:#F0C060;font-style:normal}
 .nav-sub{font-size:0.65rem;color:rgba(255,255,255,0.4);letter-spacing:0.06em;text-transform:uppercase}
+.nav-actions{margin-left:auto;display:flex;gap:0.5rem;align-items:center}
+.nav-btn{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:0.3rem 0.75rem;border-radius:6px;font-family:'Pretendard',sans-serif;font-size:0.75rem;font-weight:500;cursor:pointer;transition:background 0.15s}
+.nav-btn:hover{background:rgba(255,255,255,0.22)}
+.nav-btn.save{background:rgba(240,192,96,0.25);border-color:rgba(240,192,96,0.45)}
+.nav-btn.save:hover{background:rgba(240,192,96,0.4)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;display:none;align-items:center;justify-content:center}
+.modal-bg.on{display:flex}
+.modal{background:var(--white);border-radius:12px;width:440px;max-width:92vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow:hidden}
+.modal-head{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:0.95rem;font-weight:600}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted);line-height:1;padding:0 0.2rem}
+.modal-body{padding:1rem 1.25rem;overflow-y:auto;flex:1}
+.modal-foot{padding:0.75rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:0.5rem;justify-content:flex-end}
+.save-list{display:flex;flex-direction:column;gap:0.5rem}
+.save-item{display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0.85rem;border:1px solid var(--border);border-radius:8px;transition:all 0.15s}
+.save-item:hover{border-color:var(--forest2);background:var(--forest-bg)}
+.si-icon{font-size:1.5rem}
+.si-info{flex:1;min-width:0;cursor:pointer}
+.si-name{font-size:0.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.si-meta{font-size:0.7rem;color:var(--muted);margin-top:1px}
+.si-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem;padding:0.2rem 0.4rem;border-radius:4px;flex-shrink:0}
+.si-del:hover{background:var(--red-bg);color:var(--red)}
+.flight-dur{display:flex;align-items:center;gap:0.4rem;margin-bottom:0.5rem}
+.flight-dur label{font-size:0.72rem;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.flight-dur input{width:64px;text-align:center}
+.flight-dur span{font-size:0.72rem;color:var(--muted)}
 .app{display:grid;grid-template-columns:340px 1fr;min-height:calc(100vh - 52px)}
 
 /* SIDEBAR */
@@ -202,7 +228,29 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0.9rem 0}
 <nav>
   <span class="logo">트립<em>픽</em></span>
   <span class="nav-sub">AI 여행 플래너</span>
+  <div class="nav-actions">
+    <button class="nav-btn" onclick="openLoad()">📂 불러오기</button>
+    <button class="nav-btn save" id="savebtn" onclick="saveTrip()" style="display:none">💾 저장하기</button>
+  </div>
 </nav>
+
+<!-- 저장 목록 모달 -->
+<div class="modal-bg" id="loadModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>저장된 여행 플랜</h3>
+      <button class="modal-close" onclick="closeLoad()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="save-list" id="saveList">
+        <p style="color:var(--muted);font-size:0.82rem;text-align:center;padding:1.5rem 0">저장된 여행이 없어요</p>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline btn-sm" onclick="closeLoad()">닫기</button>
+    </div>
+  </div>
+</div>
 
 <div class="app">
 <aside class="sidebar">
@@ -250,8 +298,13 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0.9rem 0}
         <div class="flight-ap"><input type="text" id="arr-ap" placeholder="도착 공항" style="text-align:center"/></div>
       </div>
       <div class="row2">
-        <div class="field"><label>출발 일시</label><input type="date" id="dep-date"/></div>
-        <div class="field"><label>출발 시간</label><input type="time" id="dep-time" value="08:00"/></div>
+        <div class="field"><label>출발 일시</label><input type="date" id="dep-date" oninput="calcArr()"/></div>
+        <div class="field"><label>출발 시간</label><input type="time" id="dep-time" value="08:00" oninput="calcArr()"/></div>
+      </div>
+      <div class="flight-dur">
+        <label>✈ 비행시간</label>
+        <input type="text" id="dep-dur" value="2시간 30분" placeholder="2시간 30분" oninput="calcArr()"/>
+        <span>입력하면 도착 자동계산</span>
       </div>
       <div class="row2">
         <div class="field"><label>도착 일시</label><input type="date" id="arr-date"/></div>
@@ -267,8 +320,13 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0.9rem 0}
         <div class="flight-ap"><input type="text" id="ret-arr-ap" placeholder="도착 공항" style="text-align:center"/></div>
       </div>
       <div class="row2">
-        <div class="field"><label>출발 일시</label><input type="date" id="ret-dep-date"/></div>
-        <div class="field"><label>출발 시간</label><input type="time" id="ret-dep-time" value="18:00"/></div>
+        <div class="field"><label>출발 일시</label><input type="date" id="ret-dep-date" oninput="calcRetArr()"/></div>
+        <div class="field"><label>출발 시간</label><input type="time" id="ret-dep-time" value="18:00" oninput="calcRetArr()"/></div>
+      </div>
+      <div class="flight-dur">
+        <label>✈ 비행시간</label>
+        <input type="text" id="ret-dur" value="2시간 30분" placeholder="2시간 30분" oninput="calcRetArr()"/>
+        <span>입력하면 도착 자동계산</span>
       </div>
       <div class="row2">
         <div class="field"><label>도착 일시</label><input type="date" id="ret-arr-date"/></div>
@@ -589,6 +647,7 @@ function renderResult(data,people,style){
   document.getElementById('emptystate').style.display='none';
   const r=document.getElementById('result');
   r.style.display='flex';
+  document.getElementById('savebtn').style.display='';
 
   const arrDate=document.getElementById('arr-date').value;
   const retDepDate=document.getElementById('ret-dep-date').value;
@@ -821,15 +880,177 @@ function selectResto(card){
   card.classList.add('sel');
 }
 
+// ── FLIGHT TIME CALC ──
+function parseDuration(str){
+  if(!str)return 0;
+  let min=0;
+  const h=str.match(/(\d+)\s*시간/);
+  const m=str.match(/(\d+)\s*분/);
+  if(h)min+=parseInt(h[1])*60;
+  if(m)min+=parseInt(m[1]);
+  if(!h&&!m){const n=parseFloat(str);if(!isNaN(n))min=n*60;}
+  return min;
+}
+function calcArrival(dateId,timeId,durId,resDateId,resTimeId){
+  const date=document.getElementById(dateId).value;
+  const time=document.getElementById(timeId).value;
+  const dur=document.getElementById(durId).value;
+  if(!date||!time)return;
+  const mins=parseDuration(dur);
+  if(mins<=0)return;
+  const dt=new Date(date+'T'+time);
+  dt.setMinutes(dt.getMinutes()+mins);
+  document.getElementById(resDateId).value=dt.toISOString().slice(0,10);
+  document.getElementById(resTimeId).value=dt.toTimeString().slice(0,5);
+}
+function calcArr(){calcArrival('dep-date','dep-time','dep-dur','arr-date','arr-time')}
+function calcRetArr(){calcArrival('ret-dep-date','ret-dep-time','ret-dur','ret-arr-date','ret-arr-time')}
+
+// ── SAVE / LOAD (Puter.js) ──
+const SAVE_DIR='tripplanner';
+
+async function ensureDir(){
+  try{await puter.fs.mkdir(SAVE_DIR,{recursive:true})}catch(e){}
+}
+
+async function saveTrip(){
+  if(!tripData){alert('먼저 여행 플랜을 생성해주세요');return}
+  const name=prompt('여행 이름을 입력하세요',tripData.destination+' 여행');
+  if(!name)return;
+  try{
+    await ensureDir();
+    const payload={
+      name,
+      destination:tripData.destination,
+      savedAt:new Date().toISOString(),
+      formData:{
+        dest:document.getElementById('dest').value,
+        people:document.getElementById('people').value,
+        budget:document.getElementById('budget').value,
+        style:document.getElementById('style').value,
+        extra:document.getElementById('extra').value,
+        depAp:document.getElementById('dep-ap').value,
+        arrAp:document.getElementById('arr-ap').value,
+        depDate:document.getElementById('dep-date').value,
+        depTime:document.getElementById('dep-time').value,
+        depDur:document.getElementById('dep-dur').value,
+        arrDate:document.getElementById('arr-date').value,
+        arrTime:document.getElementById('arr-time').value,
+        retDepAp:document.getElementById('ret-dep-ap').value,
+        retArrAp:document.getElementById('ret-arr-ap').value,
+        retDepDate:document.getElementById('ret-dep-date').value,
+        retDepTime:document.getElementById('ret-dep-time').value,
+        retDur:document.getElementById('ret-dur').value,
+        retArrDate:document.getElementById('ret-arr-date').value,
+        retArrTime:document.getElementById('ret-arr-time').value,
+      },
+      tripData
+    };
+    const fname=SAVE_DIR+'/'+Date.now()+'.json';
+    await puter.fs.write(fname,JSON.stringify(payload,null,2));
+    showToast('💾 저장됐어요 — '+name);
+  }catch(e){alert('저장 실패: '+(e?.message||e))}
+}
+
+async function openLoad(){
+  document.getElementById('loadModal').classList.add('on');
+  await refreshSaveList();
+}
+function closeLoad(){document.getElementById('loadModal').classList.remove('on')}
+
+async function refreshSaveList(){
+  const list=document.getElementById('saveList');
+  list.innerHTML='<p style="color:var(--muted);font-size:0.82rem;text-align:center;padding:1rem 0">불러오는 중...</p>';
+  try{
+    await ensureDir();
+    const files=await puter.fs.readdir(SAVE_DIR);
+    const jsonFiles=files.filter(f=>f.name.endsWith('.json')).sort((a,b)=>b.name.localeCompare(a.name));
+    if(!jsonFiles.length){
+      list.innerHTML='<p style="color:var(--muted);font-size:0.82rem;text-align:center;padding:1.5rem 0">저장된 여행이 없어요</p>';
+      return;
+    }
+    list.innerHTML='';
+    for(const f of jsonFiles){
+      try{
+        const raw=await puter.fs.read(SAVE_DIR+'/'+f.name);
+        const text=await raw.text();
+        const data=JSON.parse(text);
+        const date=new Date(data.savedAt).toLocaleDateString('ko-KR');
+        const item=document.createElement('div');
+        item.className='save-item';
+        item.innerHTML=`
+          <div class="si-icon">✈️</div>
+          <div class="si-info" onclick="loadTrip('${SAVE_DIR}/${f.name}')">
+            <div class="si-name">${data.name}</div>
+            <div class="si-meta">${data.destination} · ${date}</div>
+          </div>
+          <button class="si-del" onclick="deleteTrip('${SAVE_DIR}/${f.name}',this)" title="삭제">🗑</button>`;
+        list.appendChild(item);
+      }catch(e){}
+    }
+  }catch(e){
+    list.innerHTML='<p style="color:var(--red);font-size:0.82rem;padding:1rem">불러오기 실패: '+(e?.message||e)+'</p>';
+  }
+}
+
+async function loadTrip(path){
+  try{
+    const raw=await puter.fs.read(path);
+    const text=await raw.text();
+    const data=JSON.parse(text);
+    const fd=data.formData||{};
+    // restore form
+    const set=(id,v)=>{const el=document.getElementById(id);if(el&&v!==undefined)el.value=v};
+    set('dest',fd.dest);set('people',fd.people);set('budget',fd.budget);
+    set('style',fd.style);set('extra',fd.extra);
+    set('dep-ap',fd.depAp);set('arr-ap',fd.arrAp);
+    set('dep-date',fd.depDate);set('dep-time',fd.depTime);set('dep-dur',fd.depDur);
+    set('arr-date',fd.arrDate);set('arr-time',fd.arrTime);
+    set('ret-dep-ap',fd.retDepAp);set('ret-arr-ap',fd.retArrAp);
+    set('ret-dep-date',fd.retDepDate);set('ret-dep-time',fd.retDepTime);set('ret-dur',fd.retDur);
+    set('ret-arr-date',fd.retArrDate);set('ret-arr-time',fd.retArrTime);
+    tripData=data.tripData;
+    closeLoad();
+    setLoading(false);
+    renderResult(tripData,fd.people||'',fd.style||'');
+    document.getElementById('savebtn').style.display='';
+    showToast('📂 불러왔어요 — '+data.name);
+  }catch(e){alert('불러오기 실패: '+(e?.message||e))}
+}
+
+async function deleteTrip(path,btn){
+  if(!confirm('이 여행을 삭제할까요?'))return;
+  try{
+    await puter.fs.delete(path);
+    btn.closest('.save-item').remove();
+    const list=document.getElementById('saveList');
+    if(!list.children.length) list.innerHTML='<p style="color:var(--muted);font-size:0.82rem;text-align:center;padding:1.5rem 0">저장된 여행이 없어요</p>';
+    showToast('🗑 삭제됐어요');
+  }catch(e){alert('삭제 실패: '+(e?.message||e))}
+}
+
+function showToast(msg){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1B4332;color:#fff;padding:0.55rem 1.25rem;border-radius:20px;font-size:0.82rem;font-weight:500;z-index:999;opacity:0;transition:opacity 0.25s';document.body.appendChild(t)}
+  t.textContent=msg;t.style.opacity='1';
+  clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',2500);
+}
+
 // ── INIT DATES ──
 (()=>{
   const t=new Date();
   const arr=new Date(t);arr.setDate(t.getDate()+30);
   const ret=new Date(arr);ret.setDate(arr.getDate()+3);
   document.getElementById('dep-date').value=t.toISOString().slice(0,10);
+  document.getElementById('dep-time').value='09:00';
+  document.getElementById('dep-dur').value='2시간 30분';
   document.getElementById('arr-date').value=arr.toISOString().slice(0,10);
+  document.getElementById('arr-time').value='11:30';
   document.getElementById('ret-dep-date').value=ret.toISOString().slice(0,10);
+  document.getElementById('ret-dep-time').value='18:00';
+  document.getElementById('ret-dur').value='2시간 30분';
   document.getElementById('ret-arr-date').value=ret.toISOString().slice(0,10);
+  document.getElementById('ret-arr-time').value='20:30';
   document.getElementById('dep-ap').value='인천 (ICN)';
   document.getElementById('arr-ap').value='간사이 (KIX)';
   document.getElementById('ret-dep-ap').value='간사이 (KIX)';
