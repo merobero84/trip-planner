@@ -6,7 +6,6 @@
 <title>트립픽</title>
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://js.puter.com/v2/"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
 <style>
@@ -258,32 +257,34 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0.9rem 0}
   <span class="logo">트립<em>픽</em></span>
   <span class="nav-sub">AI 여행 플래너</span>
   <div class="nav-actions">
-    <button class="nav-btn" onclick="openLoad()">📂 불러오기</button>
+    <button class="nav-btn" onclick="importTrip()">📂 불러오기</button>
     <button class="nav-btn" id="xlsbtn" onclick="exportExcel()" style="display:none">📊 엑셀 추출</button>
     <button class="nav-btn save" id="savebtn" onclick="saveTrip()" style="display:none">💾 저장하기</button>
   </div>
 </nav>
 
-<!-- 저장 목록 모달 -->
-<div class="modal-bg" id="loadModal">
-  <div class="modal">
-    <div class="modal-head">
-      <h3>저장된 여행 플랜</h3>
-      <button class="modal-close" onclick="closeLoad()">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="save-list" id="saveList">
-        <p style="color:var(--muted);font-size:0.82rem;text-align:center;padding:1.5rem 0">저장된 여행이 없어요</p>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-outline btn-sm" onclick="closeLoad()">닫기</button>
-    </div>
-  </div>
-</div>
+<input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(this)"/>
+
+<!-- 저장 모달 제거됨 - JSON 파일 방식으로 변경 -->
 
 <div class="app">
 <aside class="sidebar">
+
+  <!-- API 키 -->
+  <div class="sec">
+    <p class="slabel">🔑 Google AI API 키</p>
+    <div style="position:relative">
+      <input type="password" id="apikey" placeholder="AIza..." autocomplete="off"
+        style="width:100%;padding:0.42rem 2.2rem 0.42rem 0.65rem;border:1px solid var(--border);border-radius:6px;font-family:'Pretendard',sans-serif;font-size:0.82rem;color:var(--ink);outline:none"/>
+      <button onclick="toggleKey()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:0.7rem;color:var(--muted);padding:2px 4px">보기</button>
+    </div>
+    <p style="font-size:0.7rem;color:var(--muted);margin-top:4px;line-height:1.5">
+      <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--forest2)">aistudio.google.com</a>
+      에서 무료 발급 · 키는 브라우저에만 저장돼요
+    </p>
+  </div>
+
+  <hr class="div"/>
 
   <!-- 기본 정보 -->
   <div class="sec">
@@ -662,40 +663,41 @@ ${hotelInfo}
 마지막날 마지막 items에는 반드시 귀국 항공편을 포함하세요:
 {"type":"flight","label":"귀국 편 출발","from":"${retDepAp}","to":"${retArrAp}","departTime":"${retDepDate} ${retDepTime}","arriveTime":"${retArrDate} ${retArrTime}","note":"공항 2시간 전 도착 권장"}`;
 
+  const apiKey=document.getElementById('apikey').value.trim();
+  if(!apiKey){showErr('Google AI API 키를 입력해주세요');return}
+  localStorage.setItem('gemini_api_key',apiKey);
+
   try{
-    let response;
-    const opts={model:'gemini-2.5-flash', max_tokens:4000};
-    if(imgs.length>0) response=await puter.ai.chat(prompt,imgs[0].url,opts);
-    else response=await puter.ai.chat(prompt,opts);
+    // Gemini API 직접 호출
+    const parts=[];
+    if(imgs.length>0){
+      const base64=imgs[0].url.split(',')[1];
+      const mime=imgs[0].file?.type||'image/jpeg';
+      parts.push({inlineData:{mimeType:mime,data:base64}});
+    }
+    parts.push({text:prompt});
 
-    console.log('Puter 응답 전체:', JSON.stringify(response).slice(0,600));
+    const res=await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          contents:[{parts}],
+          generationConfig:{maxOutputTokens:4000,temperature:0.7}
+        })
+      }
+    );
 
-    // ── 텍스트 추출 (배열/객체/문자열 모든 형태 처리) ──
-    let text='';
-    // 배열 형태: [{message:{content:...}}]
-    if(Array.isArray(response)){
-      const first=response[0];
-      if(first?.message?.content) text=typeof first.message.content==='string'?first.message.content:JSON.stringify(first.message.content);
-      else if(first?.text) text=first.text;
-      else text=JSON.stringify(first);
-    } else if(typeof response==='string'){
-      text=response;
-    } else if(response?.message?.content){
-      const c=response.message.content;
-      if(typeof c==='string') text=c;
-      else if(Array.isArray(c)) text=c.map(x=>x.text||x.content||'').join('');
-      else text=String(c);
-    } else if(typeof response?.text==='string'){
-      text=response.text;
-    } else if(typeof response?.content==='string'){
-      text=response.content;
-    } else if(response?.choices?.[0]?.message?.content){
-      text=response.choices[0].message.content;
-    } else {
-      text=JSON.stringify(response);
+    if(!res.ok){
+      const err=await res.json().catch(()=>({}));
+      throw new Error(err?.error?.message||`API 오류 (${res.status})`);
     }
 
-    console.log('추출된 텍스트 (앞500자):', text.slice(0,500));
+    const data=await res.json();
+    console.log('Gemini 응답:', JSON.stringify(data).slice(0,300));
+    const text=data?.candidates?.[0]?.content?.parts?.[0]?.text||'';
+    if(!text) throw new Error('Gemini 응답이 비어있어요. 다시 시도해주세요.');
 
     if(!text||text.trim()==='') throw new Error('AI 응답이 비어있어요. 잠시 후 다시 시도해주세요.');
 
@@ -1070,158 +1072,118 @@ function calcArrival(dateId,timeId,durId,resDateId,resTimeId){
 function calcArr(){calcArrival('dep-date','dep-time','dep-dur','arr-date','arr-time')}
 function calcRetArr(){calcArrival('ret-dep-date','ret-dep-time','ret-dur','ret-arr-date','ret-arr-time')}
 
-// ── SAVE / LOAD (Puter.js) ──
-const SAVE_DIR='tripplanner';
+// ── SAVE / LOAD (JSON 파일 방식) ──
 
-async function ensureDir(){
-  try{await puter.fs.mkdir(SAVE_DIR,{recursive:true})}catch(e){}
+function buildPayload(name){
+  return{
+    name, destination:tripData.destination,
+    savedAt:new Date().toISOString(),
+    formData:{
+      dest:document.getElementById('dest').value,
+      people:document.getElementById('people').value,
+      budget:document.getElementById('budget').value,
+      style:document.getElementById('style').value,
+      extra:document.getElementById('extra').value,
+      depAp:document.getElementById('dep-ap').value,
+      arrAp:document.getElementById('arr-ap').value,
+      depDate:document.getElementById('dep-date').value,
+      depTime:document.getElementById('dep-time').value,
+      depDur:document.getElementById('dep-dur').value,
+      arrDate:document.getElementById('arr-date').value,
+      arrTime:document.getElementById('arr-time').value,
+      retDepAp:document.getElementById('ret-dep-ap').value,
+      retArrAp:document.getElementById('ret-arr-ap').value,
+      retDepDate:document.getElementById('ret-dep-date').value,
+      retDepTime:document.getElementById('ret-dep-time').value,
+      retDur:document.getElementById('ret-dur').value,
+      retArrDate:document.getElementById('ret-arr-date').value,
+      retArrTime:document.getElementById('ret-arr-time').value,
+      hotelToggle:document.getElementById('hotel-toggle').checked,
+      hotels:getHotels(),
+    },
+    tripData
+  };
 }
 
-async function saveTrip(){
+function saveTrip(){
   if(!tripData){alert('먼저 여행 플랜을 생성해주세요');return}
   const name=prompt('여행 이름을 입력하세요',tripData.destination+' 여행');
   if(!name)return;
-  try{
-    await ensureDir();
-    const payload={
-      name,
-      destination:tripData.destination,
-      savedAt:new Date().toISOString(),
-      formData:{
-        dest:document.getElementById('dest').value,
-        people:document.getElementById('people').value,
-        budget:document.getElementById('budget').value,
-        style:document.getElementById('style').value,
-        extra:document.getElementById('extra').value,
-        depAp:document.getElementById('dep-ap').value,
-        arrAp:document.getElementById('arr-ap').value,
-        depDate:document.getElementById('dep-date').value,
-        depTime:document.getElementById('dep-time').value,
-        depDur:document.getElementById('dep-dur').value,
-        arrDate:document.getElementById('arr-date').value,
-        arrTime:document.getElementById('arr-time').value,
-        retDepAp:document.getElementById('ret-dep-ap').value,
-        retArrAp:document.getElementById('ret-arr-ap').value,
-        retDepDate:document.getElementById('ret-dep-date').value,
-        retDepTime:document.getElementById('ret-dep-time').value,
-        retDur:document.getElementById('ret-dur').value,
-        retArrDate:document.getElementById('ret-arr-date').value,
-        retArrTime:document.getElementById('ret-arr-time').value,
-        hotelToggle:document.getElementById('hotel-toggle').checked,
-        hotels:getHotels(),
-      },
-      tripData
-    };
-    const fname=SAVE_DIR+'/'+Date.now()+'.json';
-    await puter.fs.write(fname,JSON.stringify(payload,null,2));
-    showToast('💾 저장됐어요 — '+name);
-  }catch(e){alert('저장 실패: '+(e?.message||e))}
+  const payload=buildPayload(name);
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='트립픽_'+name.replace(/[/\\:*?"<>|]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('💾 JSON 파일로 저장됐어요!');
 }
 
-async function openLoad(){
-  document.getElementById('loadModal').classList.add('on');
-  await refreshSaveList();
+function importTrip(){
+  document.getElementById('importFile').click();
 }
-function closeLoad(){document.getElementById('loadModal').classList.remove('on')}
 
-async function refreshSaveList(){
-  const list=document.getElementById('saveList');
-  list.innerHTML='<p style="color:var(--muted);font-size:0.82rem;text-align:center;padding:1rem 0">불러오는 중...</p>';
-  try{
-    await ensureDir();
-    const files=await puter.fs.readdir(SAVE_DIR);
-    const jsonFiles=files.filter(f=>f.name.endsWith('.json')).sort((a,b)=>b.name.localeCompare(a.name));
-    if(!jsonFiles.length){
-      list.innerHTML='<p style="color:var(--muted);font-size:0.82rem;text-align:center;padding:1.5rem 0">저장된 여행이 없어요</p>';
-      return;
-    }
-    list.innerHTML='';
-    for(const f of jsonFiles){
-      try{
-        const raw=await puter.fs.read(SAVE_DIR+'/'+f.name);
-        const text=await raw.text();
-        const data=JSON.parse(text);
-        const date=new Date(data.savedAt).toLocaleDateString('ko-KR');
-        const item=document.createElement('div');
-        item.className='save-item';
-        item.innerHTML=`
-          <div class="si-icon">✈️</div>
-          <div class="si-info" onclick="loadTrip('${SAVE_DIR}/${f.name}')">
-            <div class="si-name">${data.name}</div>
-            <div class="si-meta">${data.destination} · ${date}</div>
-          </div>
-          <button class="si-del" onclick="deleteTrip('${SAVE_DIR}/${f.name}',this)" title="삭제">🗑</button>`;
-        list.appendChild(item);
-      }catch(e){}
-    }
-  }catch(e){
-    list.innerHTML='<p style="color:var(--red);font-size:0.82rem;padding:1rem">불러오기 실패: '+(e?.message||e)+'</p>';
+function handleImport(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      restoreFormData(data);
+      showToast('📂 불러왔어요 — '+(data.name||'여행 플랜'));
+    }catch(err){alert('파일을 읽을 수 없어요: '+err.message);}
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+function restoreFormData(data){
+  const fd=data.formData||{};
+  const set=(id,v)=>{const el=document.getElementById(id);if(el&&v!==undefined)el.value=v};
+  set('dest',fd.dest);set('people',fd.people);set('budget',fd.budget);
+  set('style',fd.style);set('extra',fd.extra);
+  set('dep-ap',fd.depAp);set('arr-ap',fd.arrAp);
+  set('dep-date',fd.depDate);set('dep-time',fd.depTime);set('dep-dur',fd.depDur);
+  set('arr-date',fd.arrDate);set('arr-time',fd.arrTime);
+  set('ret-dep-ap',fd.retDepAp);set('ret-arr-ap',fd.retArrAp);
+  set('ret-dep-date',fd.retDepDate);set('ret-dep-time',fd.retDepTime);set('ret-dur',fd.retDur);
+  set('ret-arr-date',fd.retArrDate);set('ret-arr-time',fd.retArrTime);
+
+  // 호텔 복원
+  const hotelToggle=document.getElementById('hotel-toggle');
+  const hotelList=document.getElementById('hotel-list');
+  hotelList.innerHTML=''; hotelCount=0;
+  if(fd.hotelToggle&&fd.hotels?.length>0){
+    hotelToggle.checked=true;
+    document.getElementById('hotel-section').style.display='block';
+    fd.hotels.forEach(h=>{
+      hotelCount++;
+      const id='hotel-'+hotelCount;
+      const div=document.createElement('div');
+      div.className='hotel-card'; div.id=id;
+      div.innerHTML=`
+        <div class="hotel-num">호텔 ${hotelCount}</div>
+        <button class="hotel-rm" onclick="removeHotel('${id}')">✕</button>
+        <div class="field"><label>호텔 이름</label><input type="text" value="${h.name||''}"/></div>
+        <div class="row2">
+          <div class="field"><label>체크인</label><input type="date" value="${h.checkin||''}"/></div>
+          <div class="field"><label>체크아웃</label><input type="date" value="${h.checkout||''}"/></div>
+        </div>
+        <div class="field"><label>주소 / 위치 (선택)</label><input type="text" value="${h.location||''}"/></div>`;
+      hotelList.appendChild(div);
+    });
+  } else {
+    hotelToggle.checked=false;
+    document.getElementById('hotel-section').style.display='none';
   }
-}
-
-async function loadTrip(path){
-  try{
-    const raw=await puter.fs.read(path);
-    const text=await raw.text();
-    const data=JSON.parse(text);
-    const fd=data.formData||{};
-    // restore form
-    const set=(id,v)=>{const el=document.getElementById(id);if(el&&v!==undefined)el.value=v};
-    set('dest',fd.dest);set('people',fd.people);set('budget',fd.budget);
-    set('style',fd.style);set('extra',fd.extra);
-    set('dep-ap',fd.depAp);set('arr-ap',fd.arrAp);
-    set('dep-date',fd.depDate);set('dep-time',fd.depTime);set('dep-dur',fd.depDur);
-    set('arr-date',fd.arrDate);set('arr-time',fd.arrTime);
-    set('ret-dep-ap',fd.retDepAp);set('ret-arr-ap',fd.retArrAp);
-    set('ret-dep-date',fd.retDepDate);set('ret-dep-time',fd.retDepTime);set('ret-dur',fd.retDur);
-    set('ret-arr-date',fd.retArrDate);set('ret-arr-time',fd.retArrTime);
-
-    // 호텔 복원
-    const hotelToggle=document.getElementById('hotel-toggle');
-    const hotelList=document.getElementById('hotel-list');
-    hotelList.innerHTML='';
-    hotelCount=0;
-    if(fd.hotelToggle&&fd.hotels&&fd.hotels.length>0){
-      hotelToggle.checked=true;
-      document.getElementById('hotel-section').style.display='block';
-      fd.hotels.forEach(h=>{
-        hotelCount++;
-        const id=`hotel-${hotelCount}`;
-        const div=document.createElement('div');
-        div.className='hotel-card';div.id=id;
-        div.innerHTML=`
-          <div class="hotel-num">호텔 ${hotelCount}</div>
-          <button class="hotel-rm" onclick="removeHotel('${id}')">✕</button>
-          <div class="field"><label>호텔 이름</label><input type="text" value="${h.name||''}"/></div>
-          <div class="row2">
-            <div class="field"><label>체크인</label><input type="date" value="${h.checkin||''}"/></div>
-            <div class="field"><label>체크아웃</label><input type="date" value="${h.checkout||''}"/></div>
-          </div>
-          <div class="field"><label>주소 / 위치 (선택)</label><input type="text" value="${h.location||''}"/></div>`;
-        hotelList.appendChild(div);
-      });
-    } else {
-      hotelToggle.checked=false;
-      document.getElementById('hotel-section').style.display='none';
-    }
+  if(data.tripData){
     tripData=data.tripData;
-    closeLoad();
     setLoading(false);
     renderResult(tripData,fd.people||'',fd.style||'');
     document.getElementById('savebtn').style.display='';
-    showToast('📂 불러왔어요 — '+data.name);
-  }catch(e){alert('불러오기 실패: '+(e?.message||e))}
-}
-
-async function deleteTrip(path,btn){
-  if(!confirm('이 여행을 삭제할까요?'))return;
-  try{
-    await puter.fs.delete(path);
-    btn.closest('.save-item').remove();
-    const list=document.getElementById('saveList');
-    if(!list.children.length) list.innerHTML='<p style="color:var(--muted);font-size:0.82rem;text-align:center;padding:1.5rem 0">저장된 여행이 없어요</p>';
-    showToast('🗑 삭제됐어요');
-  }catch(e){alert('삭제 실패: '+(e?.message||e))}
+    document.getElementById('xlsbtn').style.display='';
+  }
 }
 
 function showToast(msg){
@@ -1229,6 +1191,13 @@ function showToast(msg){
   if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1B4332;color:#fff;padding:0.55rem 1.25rem;border-radius:20px;font-size:0.82rem;font-weight:500;z-index:999;opacity:0;transition:opacity 0.25s';document.body.appendChild(t)}
   t.textContent=msg;t.style.opacity='1';
   clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',2500);
+}
+
+function toggleKey(){
+  const inp=document.getElementById('apikey');
+  const btn=event.target;
+  if(inp.type==='password'){inp.type='text';btn.textContent='숨기기';}
+  else{inp.type='password';btn.textContent='보기';}
 }
 
 
@@ -1545,6 +1514,9 @@ async function exportExcel(){
   document.getElementById('arr-ap').value='간사이 (KIX)';
   document.getElementById('ret-dep-ap').value='간사이 (KIX)';
   document.getElementById('ret-arr-ap').value='인천 (ICN)';
+  // 저장된 API 키 복원
+  const savedKey=localStorage.getItem('gemini_api_key');
+  if(savedKey) document.getElementById('apikey').value=savedKey;
 })();
 </script>
 </body>
