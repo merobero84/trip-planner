@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>트립픽 — 사진으로 만드는 여행 플랜</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://js.puter.com/v2/"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #F7F3EE; --warm-white: #FDFAF7; --ink: #1C1917;
+  --ink-muted: #78716C; --ink-faint: #D6D0C8; --gold: #B8935A;
+  --gold-light: #F0E6D3; --forest: #2D4A3E; --red-soft: #C1563A;
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
+header { background: var(--forest); padding: 1.4rem 2rem; display: flex; align-items: baseline; gap: 0.75rem; }
+header h1 { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: #fff; font-weight: 600; }
+header span { font-size: 0.75rem; color: rgba(255,255,255,0.45); letter-spacing: 0.08em; text-transform: uppercase; }
+main { max-width: 820px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+section { margin-bottom: 2rem; }
+.label { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); font-weight: 500; margin-bottom: 0.55rem; }
+.puter-note { background: #EAF2EE; border: 1px solid #B8D8CC; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.82rem; color: var(--forest); margin-bottom: 1.5rem; line-height: 1.6; }
+.upload-zone { border: 1.5px dashed var(--gold); border-radius: 12px; padding: 2.5rem 1.5rem; text-align: center; background: var(--gold-light); cursor: pointer; transition: all 0.18s; position: relative; }
+.upload-zone:hover, .upload-zone.dragover { background: #E8D5B5; border-color: #9A7440; }
+.upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.upload-zone svg { width: 36px; height: 36px; margin: 0 auto 0.7rem; color: var(--gold); display: block; }
+.upload-zone h3 { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 400; margin-bottom: 0.25rem; }
+.upload-zone p { font-size: 0.8rem; color: var(--ink-muted); }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.65rem; margin-top: 0.9rem; }
+.photo-card { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: var(--ink-faint); }
+.photo-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-card .rm { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; background: rgba(0,0,0,0.6); border: none; border-radius: 50%; color: #fff; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.photo-count { font-size: 0.75rem; color: var(--ink-muted); margin-top: 0.45rem; }
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+.opt label { display: block; font-size: 0.73rem; color: var(--ink-muted); margin-bottom: 0.28rem; }
+.opt select, .opt input[type="text"] { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--ink-faint); border-radius: 7px; background: var(--warm-white); font-family: 'DM Sans', sans-serif; font-size: 0.86rem; color: var(--ink); outline: none; appearance: none; transition: border-color 0.15s; }
+.opt select:focus, .opt input:focus { border-color: var(--gold); }
+.btn-gen { width: 100%; padding: 0.9rem; background: var(--forest); color: #fff; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.98rem; font-weight: 500; cursor: pointer; transition: background 0.18s, transform 0.1s; }
+.btn-gen:hover { background: #3B6050; }
+.btn-gen:active { transform: scale(0.99); }
+.btn-gen:disabled { background: var(--ink-faint); color: var(--ink-muted); cursor: not-allowed; transform: none; }
+.err { background: #FEF2EE; border: 1px solid #F0C5B5; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.83rem; color: var(--red-soft); margin-top: 0.7rem; display: none; }
+#result { display: none; margin-top: 2.5rem; }
+#result.on { display: block; }
+.result-head { display: flex; align-items: center; gap: 0.75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--ink-faint); margin-bottom: 1.4rem; }
+.result-head h2 { font-family: 'Playfair Display', serif; font-size: 1.35rem; font-weight: 600; }
+.dots { display: none; gap: 4px; align-items: center; }
+.dots span { display: inline-block; width: 6px; height: 6px; background: var(--gold); border-radius: 50%; animation: bounce 1.2s infinite ease-in-out; }
+.dots span:nth-child(2) { animation-delay: 0.2s; }
+.dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,80%,100% { transform: translateY(0); opacity: 0.35; } 40% { transform: translateY(-5px); opacity: 1; } }
+#plan { background: var(--warm-white); border: 1px solid var(--ink-faint); border-radius: 12px; padding: 1.75rem 2rem; font-size: 0.92rem; line-height: 1.85; color: var(--ink); }
+#plan h1, #plan h2, #plan h3 { font-family: 'Playfair Display', serif; color: var(--forest); margin: 1.2em 0 0.45em; }
+#plan h1 { font-size: 1.35rem; } #plan h2 { font-size: 1.12rem; } #plan h3 { font-size: 0.98rem; }
+#plan p { margin: 0.5em 0; } #plan ul, #plan ol { padding-left: 1.35rem; margin: 0.45em 0; }
+#plan li { margin: 0.2em 0; } #plan hr { border: none; border-top: 1px solid var(--ink-faint); margin: 1.2em 0; }
+#plan strong { font-weight: 500; }
+footer { text-align: center; font-size: 0.7rem; color: var(--ink-muted); padding: 2rem; border-top: 1px solid var(--ink-faint); }
+@media (max-width: 520px) { .opts { grid-template-columns: 1fr; } #plan { padding: 1.2rem; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>트립픽</h1>
+  <span>사진으로 만드는 여행 플랜</span>
+</header>
+<main>
+  <div class="puter-note">
+    <strong>✦ API 키 없이 무료로 사용할 수 있어요.</strong><br>
+    처음 사용 시 Puter 무료 계정으로 로그인하는 팝업이 뜰 수 있어요.
+  </div>
+
+  <section>
+    <p class="label">여행지 사진 올리기</p>
+    <div class="upload-zone" id="zone">
+      <input type="file" id="fileinput" multiple accept="image/*" onchange="handleFiles(this.files)" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+      </svg>
+      <h3>사진을 드래그하거나 클릭해서 올리세요</h3>
+      <p>가고 싶은 곳, 먹고 싶은 것, 해보고 싶은 것 — 뭐든 괜찮아요</p>
+    </div>
+    <div class="photo-grid" id="grid"></div>
+    <p class="photo-count" id="pcount"></p>
+  </section>
+
+  <section>
+    <p class="label">여행 설정</p>
+    <div class="opts">
+      <div class="opt">
+        <label>여행 기간</label>
+        <select id="days">
+          <option>당일치기</option><option>1박 2일</option>
+          <option selected>2박 3일</option><option>3박 4일</option>
+          <option>4박 5일</option><option>일주일</option>
+        </select>
+      </div>
+      <div class="opt">
+        <label>여행 스타일</label>
+        <select id="style">
+          <option>여유롭게 힐링</option><option selected>알차게 관광</option>
+          <option>맛집 위주</option><option>액티비티 위주</option>
+          <option>문화/역사 탐방</option><option>자연 속 힐링</option>
+        </select>
+      </div>
+      <div class="opt">
+        <label>인원</label>
+        <select id="people">
+          <option>혼자</option><option selected>2인 (커플/친구)</option>
+          <option>소그룹 (3~5인)</option><option>가족 (아이 포함)</option>
+        </select>
+      </div>
+      <div class="opt">
+        <label>추가 요청 (선택)</label>
+        <input type="text" id="extra" placeholder="예: 대중교통만, 예산 절약 등" />
+      </div>
+    </div>
+  </section>
+
+  <button class="btn-gen" id="genbtn" onclick="generate()">✦ 여행 플랜 만들기</button>
+  <div class="err" id="errmsg"></div>
+
+  <div id="result">
+    <div class="result-head">
+      <h2>나의 여행 플랜</h2>
+      <div class="dots" id="dots"><span></span><span></span><span></span></div>
+    </div>
+    <div id="plan"></div>
+  </div>
+</main>
+<footer>트립픽 · Puter.js + Google Gemini 기반 · 완전 무료</footer>
+
+<script>
+const imgs = [];
+
+const zone = document.getElementById('zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+
+function handleFiles(files) {
+  for (const f of files) {
+    if (!f.type.startsWith('image/')) continue;
+    const reader = new FileReader();
+    reader.onload = e => { imgs.push({ url: e.target.result, file: f }); renderGrid(); };
+    reader.readAsDataURL(f);
+  }
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  imgs.forEach((img, i) => {
+    const card = document.createElement('div');
+    card.className = 'photo-card';
+    card.innerHTML = `<img src="${img.url}" /><button class="rm" onclick="removeImg(${i})">✕</button>`;
+    grid.appendChild(card);
+  });
+  document.getElementById('pcount').textContent = imgs.length > 0 ? `${imgs.length}장 준비됨` : '';
+}
+
+function removeImg(i) { imgs.splice(i, 1); renderGrid(); }
+
+function showErr(msg) { const e = document.getElementById('errmsg'); e.textContent = msg; e.style.display = 'block'; }
+function hideErr() { document.getElementById('errmsg').style.display = 'none'; }
+
+function md(text) {
+  return text
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^---$/gm, '<hr>')
+    .replace(/^\- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>[^]*?<\/li>\n?)+/g, s => `<ul>${s}</ul>`)
+    .replace(/\n\n+/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+}
+
+async function generate() {
+  hideErr();
+  if (imgs.length === 0) { showErr('사진을 최소 1장 이상 올려주세요.'); return; }
+
+  const days   = document.getElementById('days').value;
+  const style  = document.getElementById('style').value;
+  const people = document.getElementById('people').value;
+  const extra  = document.getElementById('extra').value.trim();
+
+  const btn    = document.getElementById('genbtn');
+  const dots   = document.getElementById('dots');
+  const result = document.getElementById('result');
+  const plan   = document.getElementById('plan');
+
+  btn.disabled = true;
+  btn.textContent = '플랜 생성 중...';
+  result.classList.add('on');
+  plan.innerHTML = '';
+  dots.style.display = 'flex';
+  result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const prompt = `당신은 친절한 여행 플래너입니다. 사용자가 올린 사진을 분석해서 맞춤 여행 플랜을 짜주세요.
+
+여행 조건:
+- 기간: ${days}
+- 스타일: ${style}
+- 인원: ${people}
+${extra ? `- 추가 요청: ${extra}` : ''}
+
+다음 형식으로 작성해주세요:
+
+## 📍 여행지 분석
+사진 속 장소를 파악해서 어느 도시/나라인지, 어떤 관심사를 가진 여행자인지 설명
+
+## 🗓 일정 플랜
+Day 1, Day 2... 형식으로 오전/오후/저녁 구분, 구체적 장소명과 이동수단 포함
+
+## 💡 여행 꿀팁
+이 여행지만의 꿀팁 4~5가지
+
+한국어로 작성해주세요.`;
+
+  try {
+    const response = await puter.ai.chat(
+      [
+        { type: 'file', value: imgs[0].file },
+        { type: 'text', text: prompt }
+      ],
+      { model: 'gemini-2.5-flash' }
+    );
+
+    dots.style.display = 'none';
+
+    const text = typeof response === 'string'
+      ? response
+      : (response?.message?.content?.[0]?.text || response?.text || String(response));
+
+    plan.innerHTML = `<p>${md(text)}</p>`;
+
+  } catch (e) {
+    dots.style.display = 'none';
+    result.classList.remove('on');
+    showErr('오류: ' + (e?.message || String(e)));
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✦ 여행 플랜 만들기';
+}
+</script>
+</body>
+</html>
