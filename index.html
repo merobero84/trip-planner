@@ -1030,6 +1030,8 @@ async function saveTrip(){
         retDur:document.getElementById('ret-dur').value,
         retArrDate:document.getElementById('ret-arr-date').value,
         retArrTime:document.getElementById('ret-arr-time').value,
+        hotelToggle:document.getElementById('hotel-toggle').checked,
+        hotels:getHotels(),
       },
       tripData
     };
@@ -1096,6 +1098,35 @@ async function loadTrip(path){
     set('ret-dep-ap',fd.retDepAp);set('ret-arr-ap',fd.retArrAp);
     set('ret-dep-date',fd.retDepDate);set('ret-dep-time',fd.retDepTime);set('ret-dur',fd.retDur);
     set('ret-arr-date',fd.retArrDate);set('ret-arr-time',fd.retArrTime);
+
+    // 호텔 복원
+    const hotelToggle=document.getElementById('hotel-toggle');
+    const hotelList=document.getElementById('hotel-list');
+    hotelList.innerHTML='';
+    hotelCount=0;
+    if(fd.hotelToggle&&fd.hotels&&fd.hotels.length>0){
+      hotelToggle.checked=true;
+      document.getElementById('hotel-section').style.display='block';
+      fd.hotels.forEach(h=>{
+        hotelCount++;
+        const id=`hotel-${hotelCount}`;
+        const div=document.createElement('div');
+        div.className='hotel-card';div.id=id;
+        div.innerHTML=`
+          <div class="hotel-num">호텔 ${hotelCount}</div>
+          <button class="hotel-rm" onclick="removeHotel('${id}')">✕</button>
+          <div class="field"><label>호텔 이름</label><input type="text" value="${h.name||''}"/></div>
+          <div class="row2">
+            <div class="field"><label>체크인</label><input type="date" value="${h.checkin||''}"/></div>
+            <div class="field"><label>체크아웃</label><input type="date" value="${h.checkout||''}"/></div>
+          </div>
+          <div class="field"><label>주소 / 위치 (선택)</label><input type="text" value="${h.location||''}"/></div>`;
+        hotelList.appendChild(div);
+      });
+    } else {
+      hotelToggle.checked=false;
+      document.getElementById('hotel-section').style.display='none';
+    }
     tripData=data.tripData;
     closeLoad();
     setLoading(false);
