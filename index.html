@@ -664,14 +664,21 @@ ${hotelInfo}
 
   try{
     let response;
-    if(imgs.length>0) response=await puter.ai.chat(prompt,imgs[0].url,{model:'gemini-2.5-flash'});
-    else response=await puter.ai.chat(prompt,{model:'gemini-2.5-flash'});
+    const opts={model:'gemini-2.5-flash', max_tokens:4000};
+    if(imgs.length>0) response=await puter.ai.chat(prompt,imgs[0].url,opts);
+    else response=await puter.ai.chat(prompt,opts);
 
-    console.log('Puter 응답 전체:', JSON.stringify(response).slice(0,500));
+    console.log('Puter 응답 전체:', JSON.stringify(response).slice(0,600));
 
-    // ── 텍스트 추출 (모든 가능한 구조 처리) ──
+    // ── 텍스트 추출 (배열/객체/문자열 모든 형태 처리) ──
     let text='';
-    if(typeof response==='string'){
+    // 배열 형태: [{message:{content:...}}]
+    if(Array.isArray(response)){
+      const first=response[0];
+      if(first?.message?.content) text=typeof first.message.content==='string'?first.message.content:JSON.stringify(first.message.content);
+      else if(first?.text) text=first.text;
+      else text=JSON.stringify(first);
+    } else if(typeof response==='string'){
       text=response;
     } else if(response?.message?.content){
       const c=response.message.content;
