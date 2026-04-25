@@ -545,19 +545,22 @@ async function generate(){
     ?'\n숙소 정보:\n'+hotels.map((h,i)=>`  호텔${i+1}: ${h.name} (체크인 ${h.checkin}, 체크아웃 ${h.checkout}${h.location?', 위치: '+h.location:''})`).join('\n')
     :'\n숙소: AI가 지역별 추천';
 
-  const prompt=`당신은 여행 플래너 전문가입니다. 아래 조건으로 현실적인 여행 일정을 JSON으로만 출력하세요.
+  const prompt=`You are a travel planner. Output ONLY valid JSON, no markdown, no explanation, no code blocks.
 
+여행 조건:
 목적지: ${dest}
 총 체류: ${days}일
 인원: ${people} / 예산: ${budget} / 스타일: ${style}
 ${extra?'요청: '+extra:''}
 
-항공편 정보:${flightInfo}
+항공편:${flightInfo}
 ${hotelInfo}
 
-⚠️ 중요 규칙:
-- 첫날: 도착 시간(${arrTime||'?'}) 이후부터 일정을 시작하고, 공항에서 숙소까지 이동 시간 반영
-- 마지막날: 귀국 항공편(${retDepTime||'?'}) 기준으로 공항 도착 2시간 전에 출발, 그 이전에만 일정 배치
+규칙:
+- 첫날: 도착(${arrTime||'?'}) 이후 일정 시작, 공항→숙소 이동 포함
+- 마지막날: 귀국편(${retDepTime||'?'}) 2시간 전 공항 출발, 그 이전만 일정 배치
+- 호텔 지정 시 체크인/체크아웃 포함
+- 반드시 순수 JSON만 출력 (앞뒤 텍스트 없음)
 - 호텔이 지정된 경우 체크인/체크아웃을 일정에 포함
 - 각 장소 이동시간을 현실적으로 반영
 - 반드시 JSON만 출력, 다른 텍스트 금지
@@ -658,13 +661,25 @@ ${hotelInfo}
     if(typeof response==='string') text=response;
     else if(response?.message?.content){
       const c=response.message.content;
-      text=Array.isArray(c)?c.map(x=>x.text||'').join(''):String(c);
-    } else text=response?.text||JSON.stringify(response);
+      text=Array.isArray(c)?c.map(x=>x.text||x.content||'').join(''):String(c);
+    } else if(response?.text) text=response.text;
+    else if(response?.content) text=typeof response.content==='string'?response.content:JSON.stringify(response.content);
+    else text=JSON.stringify(response);
 
-    const match=text.match(/\{[\s\S]*\}/);
-    if(!match) throw new Error('응답 파싱 실패. 다시 시도해주세요.');
-    // 백틱 코드블록 제거 후 파싱
-    let jsonStr=match[0].replace(/```json|```/g,'').trim();
+    console.log('AI 응답 원문:', text.slice(0,300));
+
+    // JSON 추출 — 여러 방식 시도
+    let jsonStr=null;
+    // 1) ```json ... ``` 블록
+    const codeMatch=text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+    if(codeMatch) jsonStr=codeMatch[1];
+    // 2) 첫 { 부터 마지막 } 까지
+    if(!jsonStr){
+      const start=text.indexOf('{');
+      const end=text.lastIndexOf('}');
+      if(start!==-1&&end>start) jsonStr=text.slice(start,end+1);
+    }
+    if(!jsonStr) throw new Error('AI가 올바른 형식으로 응답하지 않았어요. 다시 시도해주세요.');
     tripData=JSON.parse(jsonStr);
     setLoading(false);
     renderResult(tripData,people,style);
