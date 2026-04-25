@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://js.puter.com/v2/"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -258,6 +259,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0.9rem 0}
   <span class="nav-sub">AI 여행 플래너</span>
   <div class="nav-actions">
     <button class="nav-btn" onclick="openLoad()">📂 불러오기</button>
+    <button class="nav-btn" id="xlsbtn" onclick="exportExcel()" style="display:none">📊 엑셀 추출</button>
     <button class="nav-btn save" id="savebtn" onclick="saveTrip()" style="display:none">💾 저장하기</button>
   </div>
 </nav>
@@ -678,6 +680,7 @@ function renderResult(data,people,style){
   const r=document.getElementById('result');
   r.style.display='flex';
   document.getElementById('savebtn').style.display='';
+  document.getElementById('xlsbtn').style.display='';
 
   const arrDate=document.getElementById('arr-date').value;
   const retDepDate=document.getElementById('ret-dep-date').value;
@@ -1152,6 +1155,135 @@ function showToast(msg){
   if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1B4332;color:#fff;padding:0.55rem 1.25rem;border-radius:20px;font-size:0.82rem;font-weight:500;z-index:999;opacity:0;transition:opacity 0.25s';document.body.appendChild(t)}
   t.textContent=msg;t.style.opacity='1';
   clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',2500);
+}
+
+// ── EXCEL EXPORT ──
+function exportExcel(){
+  if(!tripData){alert('먼저 여행 플랜을 생성해주세요');return}
+  const wb=XLSX.utils.book_new();
+
+  // ── 시트1: 여행 요약 ──
+  const summaryRows=[
+    ['트립픽 — 여행 플랜'],
+    [],
+    ['목적지', tripData.destination],
+    ['여행 소개', tripData.summary||''],
+    ['출발일', document.getElementById('dep-date').value+' '+document.getElementById('dep-time').value],
+    ['귀국일', document.getElementById('ret-dep-date').value+' '+document.getElementById('ret-dep-time').value],
+    ['인원', document.getElementById('people').value],
+    ['스타일', document.getElementById('style').value],
+    ['예산', document.getElementById('budget').value],
+    [],
+    ['항공편(가는편)', `${document.getElementById('dep-ap').value} → ${document.getElementById('arr-ap').value}`],
+    ['항공편(오는편)', `${document.getElementById('ret-dep-ap').value} → ${document.getElementById('ret-arr-ap').value}`],
+  ];
+  // 호텔 정보
+  const hotels=getHotels();
+  if(hotels.length>0){
+    summaryRows.push([]);
+    summaryRows.push(['숙소 정보','호텔명','체크인','체크아웃','위치']);
+    hotels.forEach((h,i)=>summaryRows.push([`호텔 ${i+1}`,h.name,h.checkin,h.checkout,h.location]));
+  }
+  // 꿀팁
+  if(tripData.tips?.length){
+    summaryRows.push([]);
+    summaryRows.push(['여행 꿀팁']);
+    tripData.tips.forEach((t,i)=>summaryRows.push([`팁 ${i+1}`, t]));
+  }
+  const ws0=XLSX.utils.aoa_to_sheet(summaryRows);
+  ws0['!cols']=[{wch:16},{wch:45},{wch:14},{wch:14},{wch:20}];
+  // 제목 스타일
+  if(ws0['A1']) ws0['A1'].s={font:{bold:true,sz:14},fill:{fgColor:{rgb:'1B4332'}},font:{color:{rgb:'FFFFFF'},bold:true,sz:14}};
+  XLSX.utils.book_append_sheet(wb, ws0, '여행 요약');
+
+  // ── 시트2~: 일자별 일정 ──
+  tripData.days.forEach(day=>{
+    const rows=[];
+    // 헤더
+    rows.push([`Day ${day.day}${day.date?' ('+day.date+')':''}  ${day.title||''}`]);
+    rows.push([]);
+    rows.push(['시간','구분','장소 / 내용','세부 설명','소요시간','운영시간','비용/가격','이동수단','이동상세','꿀팁']);
+
+    day.items.forEach(item=>{
+      if(item.type==='flight'){
+        rows.push([
+          item.departTime||'',
+          '✈ 항공',
+          `${item.from} → ${item.to}`,
+          item.note||'',
+          '','','','','',''
+        ]);
+      } else if(item.type==='hotel'){
+        rows.push([
+          item.time||'',
+          '🏨 숙소',
+          `[${item.action||'체크인'}] ${item.name}`,
+          item.location||'',
+          '','','','','',
+          item.tip||''
+        ]);
+      } else if(item.type==='place'){
+        rows.push([
+          item.time||'',
+          `${item.category}`,
+          item.name,
+          item.description||'',
+          item.duration||'',
+          item.hours||'',
+          item.price||'',
+          '','',
+          item.tip||''
+        ]);
+      } else if(item.type==='transport'){
+        rows.push([
+          '',
+          '🚌 이동',
+          `${item.method} (${item.duration||''})`,
+          item.detail||'',
+          item.duration||'',
+          '','',
+          item.method||'',
+          item.detail||'',
+          ''
+        ]);
+      } else if(item.type==='meal'){
+        rows.push([
+          item.time||'',
+          `🍽 ${item.mealType||'식사'}`,
+          '맛집 선택지',
+          '','','','','','',''
+        ]);
+        (item.options||[]).forEach((o,oi)=>{
+          rows.push([
+            '',
+            `  옵션 ${oi+1}`,
+            o.name,
+            o.description||'',
+            '',
+            '',
+            o.price||'',
+            '',
+            o.waitTime||'',
+            o.tip||''
+          ]);
+        });
+      }
+    });
+
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[
+      {wch:12},{wch:10},{wch:22},{wch:38},
+      {wch:10},{wch:14},{wch:12},{wch:8},{wch:32},{wch:28}
+    ];
+    // 행 높이
+    ws['!rows']=[{hpt:20},{hpt:6},{hpt:18}];
+    XLSX.utils.book_append_sheet(wb, ws, `Day ${day.day}`);
+  });
+
+  // 파일 저장
+  const fname=`트립픽_${tripData.destination}_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb, fname);
+  showToast('📊 엑셀 파일이 다운로드됐어요!');
 }
 
 // ── INIT DATES ──
