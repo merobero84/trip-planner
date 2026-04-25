@@ -200,24 +200,35 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0.9rem 0}
 .hi-tag{font-size:0.7rem;color:var(--gold);background:rgba(201,151,58,0.1);padding:2px 7px;border-radius:10px}
 
 /* MEAL OPTIONS */
-.meal-opts-label{padding:0.4rem 0.8rem 0.2rem;font-size:0.72rem;color:var(--muted)}
-.resto-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:0.5rem;padding:0.3rem 0.7rem 0.7rem}
-.rc{border:2px solid var(--border);border-radius:9px;cursor:pointer;transition:all 0.15s;background:var(--white);overflow:hidden}
-.rc:hover{border-color:var(--forest2);box-shadow:0 2px 8px rgba(0,0,0,0.08)}
-.rc.sel{border-color:var(--forest);background:var(--forest-bg)}
-.rc-img{width:100%;height:110px;object-fit:cover;display:block;background:var(--bg)}
-.rc-img-wrap{position:relative}
-.rc-sel-badge{position:absolute;top:6px;left:6px;background:var(--forest);color:#fff;font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:10px;display:none}
+.meal-opts-label{padding:0.5rem 0.9rem 0.25rem;font-size:0.72rem;color:var(--muted)}
+.resto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;padding:0.25rem 0.75rem 0.85rem}
+@media(max-width:900px){.resto-grid{grid-template-columns:repeat(2,1fr)}}
+.rc{border:2px solid var(--border);border-radius:9px;background:var(--white);overflow:hidden;display:flex;flex-direction:column;transition:border-color 0.15s,box-shadow 0.15s}
+.rc:hover{border-color:var(--forest2);box-shadow:0 2px 10px rgba(0,0,0,0.09)}
+.rc.sel{border-color:var(--forest)}
+.rc-img-wrap{position:relative;flex-shrink:0}
+.rc-img{width:100%;height:100px;object-fit:cover;display:block;background:var(--bg)}
+.rc-img-placeholder{width:100%;height:100px;background:linear-gradient(135deg,#e8f5e9,#f0f7f4);display:flex;align-items:center;justify-content:center;font-size:2rem}
+.rc-sel-badge{position:absolute;top:6px;left:6px;background:var(--forest);color:#fff;font-size:0.62rem;font-weight:700;padding:2px 8px;border-radius:10px;display:none;z-index:1}
 .rc.sel .rc-sel-badge{display:block}
-.rc-body{padding:0.55rem 0.65rem}
-.rc .rn{font-size:0.82rem;font-weight:600;margin-bottom:2px}
-.rc .rg{font-size:0.68rem;color:var(--muted);margin-bottom:4px}
-.rc .rd{font-size:0.7rem;color:var(--muted);line-height:1.4;margin-bottom:5px}
-.rc-tags{display:flex;gap:4px;flex-wrap:wrap}
-.rc-tag{font-size:0.63rem;padding:1px 5px;border-radius:9px}
+.rc-body{padding:0.55rem 0.65rem;flex:1;display:flex;flex-direction:column;gap:3px}
+.rc-name{font-size:0.83rem;font-weight:600;line-height:1.3}
+.rc-genre{font-size:0.68rem;color:var(--muted)}
+.rc-desc{font-size:0.7rem;color:var(--muted);line-height:1.45;flex:1}
+.rc-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
+.rc-tag{font-size:0.62rem;padding:1px 6px;border-radius:9px}
 .rc-tag.price{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
 .rc-tag.wait{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-border)}
-.rc .rt{font-size:0.67rem;color:var(--muted);margin-top:4px}
+.rc-tip{font-size:0.67rem;color:var(--muted);margin-top:3px}
+.rc-actions{display:flex;gap:5px;padding:0.45rem 0.65rem;border-top:1px solid var(--border);background:var(--bg);flex-shrink:0}
+.rc-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:3px;padding:0.3rem 0.2rem;border:1px solid var(--border);border-radius:5px;background:var(--white);font-family:'Pretendard',sans-serif;font-size:0.65rem;font-weight:500;color:var(--muted);text-decoration:none;cursor:pointer;transition:all 0.12s;white-space:nowrap}
+.rc-btn:hover{background:var(--white);border-color:var(--forest2);color:var(--forest2)}
+.rc-btn.map{border-color:var(--blue-border);color:var(--blue);background:var(--blue-bg)}
+.rc-btn.map:hover{background:#DBEAFE}
+.rc-btn.search{border-color:var(--orange-border);color:var(--orange);background:var(--orange-bg)}
+.rc-btn.search:hover{background:#FEE2CA}
+.rc-btn.navi{border-color:var(--green-border);color:var(--green);background:var(--green-bg)}
+.rc-btn.navi:hover{background:#DCFCE7}
 
 /* TIPS */
 .tips-list{list-style:none;display:flex;flex-direction:column;gap:6px;padding:0.75rem 1rem}
@@ -815,6 +826,14 @@ function renderTimeline(data,dayIdx){
               ${item.price?`<div class="mi">💴 <strong>${item.price}</strong></div>`:''}
               ${item.tip?`<div class="mi" style="width:100%;margin-top:2px">💡 ${item.tip}</div>`:''}
             </div>
+            <div style="display:flex;gap:6px;padding:0.45rem 0.8rem 0.6rem;flex-wrap:wrap">
+              <a class="rc-btn search" style="flex:0 0 auto;padding:0.3rem 0.75rem"
+                href="https://www.google.com/search?q=${encodeURIComponent(item.name+' '+(document.getElementById('dest').value||''))}" target="_blank" rel="noopener">🔍 구글 검색</a>
+              <a class="rc-btn map" style="flex:0 0 auto;padding:0.3rem 0.75rem"
+                href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name+' '+(document.getElementById('dest').value||''))}" target="_blank" rel="noopener">🗺 구글 지도</a>
+              <a class="rc-btn navi" style="flex:0 0 auto;padding:0.3rem 0.75rem"
+                href="${item.lat&&item.lng?`https://www.google.com/maps/dir/?api=1&destination=${item.lat},${item.lng}`:`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.name)}`}" target="_blank" rel="noopener">🧭 길찾기</a>
+            </div>
           </div>
         </div>
       </div>`;
@@ -855,23 +874,35 @@ function renderTimeline(data,dayIdx){
             <div class="meal-opts-label">원하는 맛집을 선택하세요 👇 (${opts.length}곳)</div>
             <div class="resto-grid">
               ${opts.map((o,oi)=>{
-                const kw=encodeURIComponent((o.imageKeyword||o.genre||'food restaurant').replace(/\s+/g,','));
-                const imgSrc=`https://loremflickr.com/320/200/${kw}?lock=${oi+dayIdx*10+idx*100}`;
+                const dest=document.getElementById('dest').value||'';
+                const kw=encodeURIComponent((o.imageKeyword||o.genre||'food restaurant').trim().replace(/\s+/g,','));
+                const imgSrc=`https://loremflickr.com/400/200/${kw}?lock=${Math.abs((oi+1)*(idx+1)*(dayIdx+1)*17)}`;
+                const searchQ=encodeURIComponent(`${o.name} ${dest} 맛집`);
+                const mapsQ=encodeURIComponent(`${o.name} ${dest}`);
+                const naviQ=o.lat&&o.lng
+                  ?`https://www.google.com/maps/dir/?api=1&destination=${o.lat},${o.lng}`
+                  :`https://www.google.com/maps/dir/?api=1&destination=${mapsQ}`;
                 return `
               <div class="rc ${oi===0?'sel':''}" onclick="selectResto(this)">
                 <div class="rc-img-wrap">
-                  <img class="rc-img" src="${imgSrc}" alt="${o.name}" loading="lazy" onerror="this.style.display='none'"/>
+                  <img class="rc-img" src="${imgSrc}" alt="${o.name}" loading="lazy"
+                    onerror="this.parentNode.innerHTML='<div class=rc-img-placeholder>🍽</div>'"/>
                   <div class="rc-sel-badge">✓ 선택됨</div>
                 </div>
                 <div class="rc-body">
-                  <div class="rn">${o.name}</div>
-                  <div class="rg">${o.genre||''}</div>
-                  <div class="rd">${o.description||''}</div>
+                  <div class="rc-name">${o.name}</div>
+                  <div class="rc-genre">${o.genre||''}</div>
+                  <div class="rc-desc">${o.description||''}</div>
                   <div class="rc-tags">
                     ${o.price?`<span class="rc-tag price">${o.price}</span>`:''}
                     ${o.waitTime?`<span class="rc-tag wait">${o.waitTime}</span>`:''}
                   </div>
-                  ${o.tip?`<div class="rt">💡 ${o.tip}</div>`:''}
+                  ${o.tip?`<div class="rc-tip">💡 ${o.tip}</div>`:''}
+                </div>
+                <div class="rc-actions" onclick="event.stopPropagation()">
+                  <a class="rc-btn search" href="https://www.google.com/search?q=${searchQ}" target="_blank" rel="noopener">🔍 정보</a>
+                  <a class="rc-btn map" href="https://www.google.com/maps/search/?api=1&query=${mapsQ}" target="_blank" rel="noopener">🗺 지도</a>
+                  <a class="rc-btn navi" href="${naviQ}" target="_blank" rel="noopener">🧭 길찾기</a>
                 </div>
               </div>`;
               }).join('')}
