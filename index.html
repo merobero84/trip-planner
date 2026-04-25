@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://js.puter.com/v2/"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -663,7 +663,9 @@ ${hotelInfo}
 
     const match=text.match(/\{[\s\S]*\}/);
     if(!match) throw new Error('응답 파싱 실패. 다시 시도해주세요.');
-    tripData=JSON.parse(match[0]);
+    // 백틱 코드블록 제거 후 파싱
+    let jsonStr=match[0].replace(/```json|```/g,'').trim();
+    tripData=JSON.parse(jsonStr);
     setLoading(false);
     renderResult(tripData,people,style);
   }catch(e){
@@ -1157,136 +1159,321 @@ function showToast(msg){
   clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',2500);
 }
 
-// ── EXCEL EXPORT ──
-function exportExcel(){
-  if(!tripData){alert('먼저 여행 플랜을 생성해주세요');return}
-  const wb=XLSX.utils.book_new();
 
-  // ── 시트1: 여행 요약 ──
-  const summaryRows=[
-    ['트립픽 — 여행 플랜'],
-    [],
-    ['목적지', tripData.destination],
-    ['여행 소개', tripData.summary||''],
-    ['출발일', document.getElementById('dep-date').value+' '+document.getElementById('dep-time').value],
-    ['귀국일', document.getElementById('ret-dep-date').value+' '+document.getElementById('ret-dep-time').value],
-    ['인원', document.getElementById('people').value],
-    ['스타일', document.getElementById('style').value],
-    ['예산', document.getElementById('budget').value],
-    [],
-    ['항공편(가는편)', `${document.getElementById('dep-ap').value} → ${document.getElementById('arr-ap').value}`],
-    ['항공편(오는편)', `${document.getElementById('ret-dep-ap').value} → ${document.getElementById('ret-arr-ap').value}`],
+// ── EXCEL EXPORT ──
+async function exportExcel(){
+  if(!tripData){alert('먼저 여행 플랜을 생성해주세요');return}
+  showToast('📊 엑셀 만드는 중...');
+
+  const dest=tripData.destination||'';
+  const wb=new ExcelJS.Workbook();
+  wb.creator='트립픽'; wb.created=new Date();
+
+  // ── 색상 팔레트 (ARGB) ──
+  const C={
+    forest:'FF1B4332', forest2:'FF2D6A4F', forestLight:'FFD1FAE5', forestXLight:'FFF0F7F4',
+    gold:'FFC9973A',   goldLight:'FFFDF8EE', goldBorder:'FFEDD898',
+    sky:'FF0284C7',    skyLight:'FFE0F2FE',  skyXLight:'FFF0F9FF',
+    orange:'FFEA580C', orangeLight:'FFFFF7ED',
+    purple:'FF7C3AED', purpleLight:'FFF5F3FF',
+    blue:'FF2563EB',   blueLight:'FFEFF6FF',
+    red:'FFDC2626',    redLight:'FFFEF2F2',
+    green:'FF16A34A',  greenLight:'FFF0FDF4',
+    gray:'FF71717A',   grayLight:'FFF4F4F0', grayXLight:'FFFAFAFA',
+    white:'FFFFFFFF',  ink:'FF18181B',
+    border:'FFE4E4E7', borderMed:'FF1B4332',
+  };
+
+  const fill=a=>({type:'pattern',pattern:'solid',fgColor:{argb:a}});
+  const fnt=(a,sz,bold,ul)=>({name:'맑은 고딕',size:sz||10,bold:!!bold,color:{argb:a||C.ink},underline:!!ul});
+  const aln=(h,v,w)=>({horizontal:h||'left',vertical:v||'middle',wrapText:!!w});
+  const bdr=(a,thick)=>{const s=thick?'medium':'thin',c={argb:a||C.border};return{top:{style:s,color:c},bottom:{style:s,color:c},left:{style:s,color:c},right:{style:s,color:c}}};
+  const lnk=(text,url)=>({text,hyperlink:url,tooltip:'클릭하여 열기'});
+
+  function cell(c,{bg,fg,sz,bold,h,v,wrap,ul,bc,thick}={}){
+    if(bg) c.fill=fill(bg);
+    c.font=fnt(fg,sz,bold,ul);
+    c.alignment=aln(h,v,wrap);
+    c.border=bdr(bc,thick);
+  }
+
+  function secHead(ws,label,bg,fg){
+    const rn=ws.rowCount+1;
+    ws.mergeCells(`A${rn}:J${rn}`);
+    const r=ws.addRow([label]);
+    ws.mergeCells(`A${ws.rowCount}:J${ws.rowCount}`);
+    const c2=ws.lastRow.getCell(1);
+    c2.value=label;
+    cell(c2,{bg,fg:fg||C.white,sz:11,bold:true,bc:bg,thick:false});
+    ws.lastRow.height=24;
+  }
+
+  // ════════════════════════════════════
+  //  시트 1 — 여행 요약
+  // ════════════════════════════════════
+  const ws0=wb.addWorksheet('✈ 여행 요약',{views:[{showGridLines:false}]});
+  ws0.columns=[
+    {width:14},{width:28},{width:14},{width:22},{width:14},{width:18},
   ];
-  // 호텔 정보
+
+  // 타이틀
+  ws0.mergeCells('A1:F1');
+  const tCell=ws0.getCell('A1');
+  tCell.value='  ✈  트립픽 — '+dest+' 여행 플랜';
+  cell(tCell,{bg:C.forest,fg:C.white,sz:15,bold:true,h:'left',bc:C.forest,thick:true});
+  ws0.getRow(1).height=40;
+
+  // 서브타이틀
+  ws0.mergeCells('A2:F2');
+  const subCell=ws0.getCell('A2');
+  subCell.value='  '+( tripData.summary||'' );
+  cell(subCell,{bg:C.forest2,fg:C.forestLight,sz:10,h:'left',bc:C.forest2});
+  ws0.getRow(2).height=22;
+
+  ws0.addRow([]).height=8;
+
+  // ── 기본 정보 ──
+  secHead(ws0,'  📋 기본 정보',C.forest2);
+  const infoRows=[
+    ['목적지',dest,'','','',''],
+    ['출발',''+document.getElementById('dep-date').value+' '+document.getElementById('dep-time').value,
+     '귀국',''+document.getElementById('ret-dep-date').value+' '+document.getElementById('ret-dep-time').value,'',''],
+    ['인원',''+document.getElementById('people').value,
+     '스타일',''+document.getElementById('style').value,
+     '예산',''+document.getElementById('budget').value],
+  ];
+  infoRows.forEach(rowData=>{
+    const r=ws0.addRow(rowData);
+    r.height=22;
+    r.eachCell({includeEmpty:true},(c2,col)=>{
+      const isLabel=col===1||col===3||col===5;
+      cell(c2,{bg:isLabel?C.forestLight:C.white,fg:isLabel?C.forest2:C.ink,bold:isLabel,wrap:col===2,bc:C.border});
+    });
+  });
+
+  // ── 항공편 ──
+  ws0.addRow([]).height=6;
+  secHead(ws0,'  ✈ 항공편',C.sky);
+  const flightRows=[
+    ['가는 편',
+      document.getElementById('dep-ap').value+' → '+document.getElementById('arr-ap').value,
+      '출발',document.getElementById('dep-date').value+' '+document.getElementById('dep-time').value,
+      '도착',document.getElementById('arr-date').value+' '+document.getElementById('arr-time').value],
+    ['오는 편',
+      document.getElementById('ret-dep-ap').value+' → '+document.getElementById('ret-arr-ap').value,
+      '출발',document.getElementById('ret-dep-date').value+' '+document.getElementById('ret-dep-time').value,
+      '도착',document.getElementById('ret-arr-date').value+' '+document.getElementById('ret-arr-time').value],
+  ];
+  flightRows.forEach(rowData=>{
+    const r=ws0.addRow(rowData);
+    r.height=22;
+    r.eachCell({includeEmpty:true},(c2,col)=>{
+      const isL=col===1||col===3||col===5;
+      cell(c2,{bg:isL?C.skyLight:C.white,fg:isL?C.sky:C.ink,bold:isL,bc:C.border});
+    });
+  });
+
+  // ── 호텔 ──
   const hotels=getHotels();
   if(hotels.length>0){
-    summaryRows.push([]);
-    summaryRows.push(['숙소 정보','호텔명','체크인','체크아웃','위치']);
-    hotels.forEach((h,i)=>summaryRows.push([`호텔 ${i+1}`,h.name,h.checkin,h.checkout,h.location]));
+    ws0.addRow([]).height=6;
+    secHead(ws0,'  🏨 호텔 정보',C.gold);
+    const hh=ws0.addRow(['호텔명','위치','체크인','체크아웃','🔍 검색','🗺 지도']);
+    hh.height=20;
+    hh.eachCell({includeEmpty:true},c2=>cell(c2,{bg:C.goldLight,fg:C.gold,bold:true,h:'center',bc:C.border}));
+    hotels.forEach(h=>{
+      const q=encodeURIComponent(h.name+' '+dest);
+      const r=ws0.addRow([
+        h.name, h.location, h.checkin, h.checkout,
+        lnk('검색','https://www.google.com/search?q='+q),
+        lnk('지도','https://www.google.com/maps/search/?api=1&query='+q),
+      ]);
+      r.height=20;
+      r.eachCell({includeEmpty:true},(c2,col)=>{
+        const isLink=col>=5;
+        cell(c2,{bg:isLink?C.blueLight:C.white,fg:isLink?C.blue:C.ink,ul:isLink,h:isLink?'center':'left',bc:C.border});
+      });
+    });
   }
-  // 꿀팁
+
+  // ── 꿀팁 ──
   if(tripData.tips?.length){
-    summaryRows.push([]);
-    summaryRows.push(['여행 꿀팁']);
-    tripData.tips.forEach((t,i)=>summaryRows.push([`팁 ${i+1}`, t]));
+    ws0.addRow([]).height=6;
+    secHead(ws0,'  💡 여행 꿀팁',C.gold);
+    tripData.tips.forEach((tip,i)=>{
+      const rn=ws0.rowCount+1;
+      ws0.mergeCells('A'+rn+':F'+rn);
+      const r=ws0.addRow(['  '+(i+1)+'.  '+tip]);
+      ws0.mergeCells('A'+ws0.rowCount+':F'+ws0.rowCount);
+      const c2=ws0.lastRow.getCell(1);
+      c2.value='  '+(i+1)+'.  '+tip;
+      cell(c2,{bg:i%2===0?C.goldLight:'FFFEFBF0',fg:C.ink,wrap:true,bc:C.border});
+      ws0.lastRow.height=24;
+    });
   }
-  const ws0=XLSX.utils.aoa_to_sheet(summaryRows);
-  ws0['!cols']=[{wch:16},{wch:45},{wch:14},{wch:14},{wch:20}];
-  // 제목 스타일
-  if(ws0['A1']) ws0['A1'].s={font:{bold:true,sz:14},fill:{fgColor:{rgb:'1B4332'}},font:{color:{rgb:'FFFFFF'},bold:true,sz:14}};
-  XLSX.utils.book_append_sheet(wb, ws0, '여행 요약');
 
-  // ── 시트2~: 일자별 일정 ──
+  // ════════════════════════════════════
+  //  시트 2~ — 일자별 일정
+  // ════════════════════════════════════
+  const catBg={관광:C.blueLight,식사:C.orangeLight,숙소:C.purpleLight,쇼핑:C.redLight,액티비티:C.greenLight,이동:C.grayLight};
+  const catFg={관광:C.blue,식사:C.orange,숙소:C.purple,쇼핑:C.red,액티비티:C.green,이동:C.gray};
+
   tripData.days.forEach(day=>{
-    const rows=[];
-    // 헤더
-    rows.push([`Day ${day.day}${day.date?' ('+day.date+')':''}  ${day.title||''}`]);
-    rows.push([]);
-    rows.push(['시간','구분','장소 / 내용','세부 설명','소요시간','운영시간','비용/가격','이동수단','이동상세','꿀팁']);
+    const sheetName='Day '+day.day+(day.date?' ('+day.date.slice(5)+')':'');
+    const ws=wb.addWorksheet(sheetName,{views:[{showGridLines:false}]});
+    ws.columns=[
+      {width:8},  // 시간
+      {width:9},  // 구분
+      {width:22}, // 장소명
+      {width:38}, // 설명
+      {width:10}, // 소요시간
+      {width:12}, // 비용
+      {width:26}, // 꿀팁
+      {width:10}, // 검색
+      {width:8},  // 지도
+      {width:8},  // 길찾기
+    ];
 
+    // 타이틀
+    ws.mergeCells('A1:J1');
+    const dt=ws.getCell('A1');
+    dt.value='  Day '+day.day+'  |  '+(day.title||'')+(day.date?'  ('+day.date+')':'');
+    cell(dt,{bg:C.forest,fg:C.white,sz:13,bold:true,h:'left',bc:C.forest,thick:true});
+    ws.getRow(1).height=34;
+
+    // 컬럼 헤더
+    const hdr=['시간','구분','장소 / 내용','세부 설명','소요시간','비용','꿀팁','🔍','🗺','🧭'];
+    const hr=ws.addRow(hdr);
+    hr.height=22;
+    hr.eachCell(c2=>cell(c2,{bg:C.forest2,fg:C.white,sz:10,bold:true,h:'center',bc:C.forest2}));
+
+    let rowNum=0;
     day.items.forEach(item=>{
+      rowNum++;
+      const evenBg=rowNum%2===0?C.grayXLight:C.white;
+      const q=item.name?encodeURIComponent(item.name+' '+dest):'';
+      const naviUrl=item.lat&&item.lng
+        ?'https://www.google.com/maps/dir/?api=1&destination='+item.lat+','+item.lng
+        :(q?'https://www.google.com/maps/dir/?api=1&destination='+q:'');
+
       if(item.type==='flight'){
-        rows.push([
-          item.departTime||'',
-          '✈ 항공',
-          `${item.from} → ${item.to}`,
-          item.note||'',
+        const r=ws.addRow([
+          item.departTime||'','✈ 항공',
+          (item.from||'')+' → '+(item.to||''),item.note||'',
           '','','','','',''
         ]);
-      } else if(item.type==='hotel'){
-        rows.push([
-          item.time||'',
-          '🏨 숙소',
-          `[${item.action||'체크인'}] ${item.name}`,
-          item.location||'',
-          '','','','','',
-          item.tip||''
+        r.height=24;
+        r.eachCell({includeEmpty:true},(c2,col)=>{
+          cell(c2,{bg:C.skyLight,fg:col===2?C.sky:C.ink,bold:col===2,wrap:col===4,bc:C.border});
+        });
+      }
+      else if(item.type==='hotel'){
+        const hq=encodeURIComponent((item.name||'')+' '+dest);
+        const r=ws.addRow([
+          item.time||'','🏨 숙소',
+          '['+(item.action||'체크인')+'] '+(item.name||''),item.location||'',
+          '','',item.tip||'',
+          lnk('검색','https://www.google.com/search?q='+hq),
+          lnk('지도','https://www.google.com/maps/search/?api=1&query='+hq),
+          lnk('길찾기',naviUrl||'https://www.google.com/maps/search/?api=1&query='+hq),
         ]);
-      } else if(item.type==='place'){
-        rows.push([
-          item.time||'',
-          `${item.category}`,
-          item.name,
-          item.description||'',
-          item.duration||'',
-          item.hours||'',
-          item.price||'',
-          '','',
-          item.tip||''
+        r.height=22;
+        r.eachCell({includeEmpty:true},(c2,col)=>{
+          const isLink=col>=8;
+          cell(c2,{bg:isLink?C.blueLight:C.goldLight,fg:isLink?C.blue:col===2?C.gold:C.ink,bold:col===2,ul:isLink,h:isLink?'center':'left',bc:C.border});
+        });
+      }
+      else if(item.type==='place'){
+        const bg=catBg[item.category]||evenBg;
+        const fg=catFg[item.category]||C.ink;
+        const r=ws.addRow([
+          item.time||'',item.category||'',
+          item.name||'',item.description||'',
+          item.duration||'',item.price||'',item.tip||'',
+          q?lnk('검색','https://www.google.com/search?q='+q):'',
+          q?lnk('지도','https://www.google.com/maps/search/?api=1&query='+q):'',
+          naviUrl?lnk('길찾기',naviUrl):'',
         ]);
-      } else if(item.type==='transport'){
-        rows.push([
-          '',
-          '🚌 이동',
-          `${item.method} (${item.duration||''})`,
-          item.detail||'',
-          item.duration||'',
-          '','',
-          item.method||'',
-          item.detail||'',
-          ''
+        r.height=item.description&&item.description.length>40?34:22;
+        r.eachCell({includeEmpty:true},(c2,col)=>{
+          if(col===2){cell(c2,{bg,fg,bold:true,h:'center',bc:C.border});}
+          else if(col>=8){cell(c2,{bg:C.blueLight,fg:C.blue,ul:true,h:'center',bc:C.border});}
+          else{cell(c2,{bg:evenBg,fg:C.ink,bold:col===3,wrap:col===4||col===7,bc:C.border});}
+        });
+      }
+      else if(item.type==='transport'){
+        const r=ws.addRow([
+          '','🚌 이동',
+          (item.method||'')+' · '+(item.duration||''),
+          item.detail||'',item.duration||'',
+          item.cost&&item.cost!=='무료'?item.cost:'',
+          '','','',''
         ]);
-      } else if(item.type==='meal'){
-        rows.push([
-          item.time||'',
-          `🍽 ${item.mealType||'식사'}`,
-          '맛집 선택지',
-          '','','','','','',''
+        r.height=item.detail&&item.detail.length>40?30:20;
+        r.eachCell({includeEmpty:true},(c2,col)=>{
+          cell(c2,{bg:C.grayLight,fg:col===2?C.gray:C.ink,bold:col===2,sz:9,wrap:col===4,bc:C.border});
+        });
+      }
+      else if(item.type==='meal'){
+        // 식사 타이틀 행
+        const mq=encodeURIComponent((item.mealType||'식사')+' '+dest);
+        const mr=ws.addRow([
+          item.time||'',(item.mealType||'식사')+'🍽',
+          '맛집 선택지 (아래 옵션 중 선택)','','','','','','',''
         ]);
+        mr.height=22;
+        mr.eachCell({includeEmpty:true},(c2,col)=>{
+          cell(c2,{bg:C.orange,fg:C.white,bold:true,bc:C.orange});
+        });
+
+        // 옵션 헤더
+        const oh=ws.addRow(['','','맛집명','설명','웨이팅','가격','꿀팁','🔍','🗺','🧭']);
+        oh.height=18;
+        oh.eachCell({includeEmpty:true},(c2,col)=>{
+          cell(c2,{bg:C.orangeLight,fg:C.orange,bold:true,h:'center',sz:9,bc:C.border});
+        });
+
+        // 옵션들
         (item.options||[]).forEach((o,oi)=>{
-          rows.push([
-            '',
-            `  옵션 ${oi+1}`,
-            o.name,
-            o.description||'',
-            '',
-            '',
-            o.price||'',
-            '',
-            o.waitTime||'',
-            o.tip||''
+          const oq=encodeURIComponent((o.name||'')+' '+dest);
+          const oNavi=o.lat&&o.lng
+            ?'https://www.google.com/maps/dir/?api=1&destination='+o.lat+','+o.lng
+            :'https://www.google.com/maps/dir/?api=1&destination='+oq;
+          const obg=oi%2===0?C.orangeLight:'FFFEF7EE';
+          const or=ws.addRow([
+            '','  '+(oi+1)+'번',
+            o.name||'',o.description||'',
+            o.waitTime||'',o.price||'',o.tip||'',
+            lnk('검색','https://www.google.com/search?q='+oq),
+            lnk('지도','https://www.google.com/maps/search/?api=1&query='+oq),
+            lnk('길찾기',oNavi),
           ]);
+          or.height=o.description&&o.description.length>30?30:22;
+          or.eachCell({includeEmpty:true},(c2,col)=>{
+            if(col===2){cell(c2,{bg:C.orangeLight,fg:C.orange,bold:true,h:'center',sz:9,bc:C.border});}
+            else if(col>=8){cell(c2,{bg:C.blueLight,fg:C.blue,ul:true,h:'center',sz:9,bc:C.border});}
+            else{cell(c2,{bg:obg,fg:C.ink,bold:col===3,wrap:col===4||col===7,sz:9,bc:C.border});}
+          });
         });
       }
     });
 
-    const ws=XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols']=[
-      {wch:12},{wch:10},{wch:22},{wch:38},
-      {wch:10},{wch:14},{wch:12},{wch:8},{wch:32},{wch:28}
-    ];
-    // 행 높이
-    ws['!rows']=[{hpt:20},{hpt:6},{hpt:18}];
-    XLSX.utils.book_append_sheet(wb, ws, `Day ${day.day}`);
+    // 하단 여백
+    ws.addRow([]).height=10;
   });
 
-  // 파일 저장
-  const fname=`트립픽_${tripData.destination}_${new Date().toISOString().slice(0,10)}.xlsx`;
-  XLSX.writeFile(wb, fname);
-  showToast('📊 엑셀 파일이 다운로드됐어요!');
+  // ── 다운로드 ──
+  const buf=await wb.xlsx.writeBuffer();
+  const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='트립픽_'+dest+'_'+new Date().toISOString().slice(0,10)+'.xlsx';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('📊 엑셀 다운로드 완료!');
 }
 
-// ── INIT DATES ──
+
 (()=>{
   const t=new Date();
   const arr=new Date(t);arr.setDate(t.getDate()+30);
