@@ -630,26 +630,25 @@ ${hotelInfo}
           "options": [
             {
               "name": "맛집명",
-              "genre": "장르 (예: 라멘, 스시, 이자카야)",
-              "imageKeyword": "영어 이미지 검색 키워드 (예: ramen bowl japanese)",
-              "description": "설명 2문장. 분위기와 대표메뉴 포함.",
+              "genre": "장르",
+              "imageKeyword": "영어 이미지 키워드",
+              "description": "한 문장 설명.",
               "price": "1인 예산",
-              "waitTime": "웨이팅 여부",
-              "tip": "추천 메뉴 또는 팁",
+              "waitTime": "웨이팅",
+              "tip": "팁",
               "lat": 위도숫자,
               "lng": 경도숫자
             },
-            {"name":"맛집2","genre":"장르","imageKeyword":"영어키워드","description":"설명","price":"예산","waitTime":"웨이팅","tip":"팁","lat":위도,"lng":경도},
-            {"name":"맛집3","genre":"장르","imageKeyword":"영어키워드","description":"설명","price":"예산","waitTime":"웨이팅","tip":"팁","lat":위도,"lng":경도}
+            {"name":"맛집2","genre":"장르","imageKeyword":"키워드","description":"설명","price":"예산","waitTime":"웨이팅","tip":"팁","lat":위도,"lng":경도}
           ]
         }
       ]
     }
   ],
-  "tips": ["팁1","팁2","팁3","팁4","팁5"]
+  "tips": ["팁1","팁2","팁3"]
 }
 
-⚠️ meal type의 options는 반드시 3개 이상 포함하세요. imageKeyword는 Unsplash에서 검색할 영어 키워드로, 음식 종류를 구체적으로 써주세요 (예: "sushi plate japanese", "osaka takoyaki street food", "ramen noodle soup").
+⚠️ 중요: 응답이 길어지지 않도록 description은 반드시 한 문장으로만, meal options는 정확히 2개만, tips는 3개만, transport detail도 간결하게 작성하세요.
 마지막날 마지막 items에는 반드시 귀국 항공편을 포함하세요:
 {"type":"flight","label":"귀국 편 출발","from":"${retDepAp}","to":"${retArrAp}","departTime":"${retDepDate} ${retDepTime}","arriveTime":"${retArrDate} ${retArrTime}","note":"공항 2시간 전 도착 권장"}`;
 
@@ -674,7 +673,8 @@ ${hotelInfo}
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
           contents:[{parts}],
-          generationConfig:{maxOutputTokens:8192,temperature:0.7}
+          generationConfig:{maxOutputTokens:8192,temperature:0.7},
+          thinkingConfig:{thinkingBudget:0}
         })
       }
     );
