@@ -538,16 +538,6 @@ async function generate(){
 
   setLoading(true);
 
-  // Puter 로그인 확인
-  try{
-    const user=await puter.auth.getUser();
-    console.log('Puter 로그인:', user?.username||'OK');
-  } catch(authErr){
-    setLoading(false);
-    try{ await puter.auth.signIn(); setLoading(true); }
-    catch(e){ showErr('Puter 로그인이 필요해요. 페이지를 새로고침 후 다시 시도해주세요.'); return; }
-  }
-
   const flightInfo=`
 가는 편: ${depDate||'미정'} ${depTime} ${depAp} 출발 → ${arrDate||'미정'} ${arrTime} ${arrAp} 도착
 오는 편: ${retDepDate||'미정'} ${retDepTime} ${retDepAp} 출발 → ${retArrDate||'미정'} ${retArrTime} ${retArrAp} 도착`;
