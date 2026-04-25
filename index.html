@@ -537,6 +537,16 @@ async function generate(){
 
   setLoading(true);
 
+  // Puter 로그인 확인
+  try{
+    const user=await puter.auth.getUser();
+    console.log('Puter 로그인:', user?.username||'OK');
+  } catch(authErr){
+    setLoading(false);
+    try{ await puter.auth.signIn(); setLoading(true); }
+    catch(e){ showErr('Puter 로그인이 필요해요. 페이지를 새로고침 후 다시 시도해주세요.'); return; }
+  }
+
   const flightInfo=`
 가는 편: ${depDate||'미정'} ${depTime} ${depAp} 출발 → ${arrDate||'미정'} ${arrTime} ${arrAp} 도착
 오는 편: ${retDepDate||'미정'} ${retDepTime} ${retDepAp} 출발 → ${retArrDate||'미정'} ${retArrTime} ${retArrAp} 도착`;
@@ -657,36 +667,86 @@ ${hotelInfo}
     if(imgs.length>0) response=await puter.ai.chat(prompt,imgs[0].url,{model:'gemini-2.5-flash'});
     else response=await puter.ai.chat(prompt,{model:'gemini-2.5-flash'});
 
+    console.log('Puter 응답 전체:', JSON.stringify(response).slice(0,500));
+
+    // ── 텍스트 추출 (모든 가능한 구조 처리) ──
     let text='';
-    if(typeof response==='string') text=response;
-    else if(response?.message?.content){
+    if(typeof response==='string'){
+      text=response;
+    } else if(response?.message?.content){
       const c=response.message.content;
-      text=Array.isArray(c)?c.map(x=>x.text||x.content||'').join(''):String(c);
-    } else if(response?.text) text=response.text;
-    else if(response?.content) text=typeof response.content==='string'?response.content:JSON.stringify(response.content);
-    else text=JSON.stringify(response);
-
-    console.log('AI 응답 원문:', text.slice(0,300));
-
-    // JSON 추출 — 여러 방식 시도
-    let jsonStr=null;
-    // 1) ```json ... ``` 블록
-    const codeMatch=text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-    if(codeMatch) jsonStr=codeMatch[1];
-    // 2) 첫 { 부터 마지막 } 까지
-    if(!jsonStr){
-      const start=text.indexOf('{');
-      const end=text.lastIndexOf('}');
-      if(start!==-1&&end>start) jsonStr=text.slice(start,end+1);
+      if(typeof c==='string') text=c;
+      else if(Array.isArray(c)) text=c.map(x=>x.text||x.content||'').join('');
+      else text=String(c);
+    } else if(typeof response?.text==='string'){
+      text=response.text;
+    } else if(typeof response?.content==='string'){
+      text=response.content;
+    } else if(response?.choices?.[0]?.message?.content){
+      text=response.choices[0].message.content;
+    } else {
+      text=JSON.stringify(response);
     }
-    if(!jsonStr) throw new Error('AI가 올바른 형식으로 응답하지 않았어요. 다시 시도해주세요.');
-    tripData=JSON.parse(jsonStr);
+
+    console.log('추출된 텍스트 (앞500자):', text.slice(0,500));
+
+    if(!text||text.trim()==='') throw new Error('AI 응답이 비어있어요. 잠시 후 다시 시도해주세요.');
+
+    // ── JSON 추출 — 균형 중괄호 카운팅 ──
+    function extractJSON(str){
+      // 1) ```json 또는 ``` 블록 내부 추출
+      const blockMatch=str.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if(blockMatch){
+        const inner=blockMatch[1].trim();
+        if(inner.startsWith('{')) str=inner; // 블록 내용으로 교체 후 계속
+      }
+      // 2) 첫 { 부터 균형 맞는 } 까지 추출
+      const start=str.indexOf('{');
+      if(start===-1) return null;
+      let depth=0;
+      let inStr=false, escape=false;
+      for(let i=start;i<str.length;i++){
+        const ch=str[i];
+        if(escape){escape=false;continue;}
+        if(ch==='\\'){escape=true;continue;}
+        if(ch==='"'){inStr=!inStr;continue;}
+        if(inStr) continue;
+        if(ch==='{') depth++;
+        else if(ch==='}'){
+          depth--;
+          if(depth===0) return str.slice(start,i+1);
+        }
+      }
+      return null;
+    }
+
+    let jsonStr=extractJSON(text);
+    if(!jsonStr) throw new Error('JSON을 찾을 수 없어요. 다시 시도해주세요.');
+
+    try{
+      tripData=JSON.parse(jsonStr);
+    }catch(parseErr){
+      console.error('1차 파싱 실패:', parseErr.message);
+      // trailing comma, 제어문자 정리 후 재시도
+      const cleaned=jsonStr
+        .replace(/[\x00-\x1F\x7F]/g,' ')
+        .replace(/,(\s*[}\]])/g,'$1');
+      try{
+        tripData=JSON.parse(cleaned);
+      }catch(e2){
+        console.error('2차 파싱 실패:', e2.message, '\n원문:', jsonStr.slice(0,300));
+        throw new Error('JSON 파싱 실패. 다시 시도해주세요. ('+e2.message+')');
+      }
+    }
+
     setLoading(false);
     renderResult(tripData,people,style);
   }catch(e){
     setLoading(false);
     document.getElementById('emptystate').style.display='flex';
-    showErr('오류: '+(e?.message||String(e)));
+    const msg=e?.message||String(e);
+    showErr('오류: '+msg+'\n→ 잠시 후 다시 시도해보세요.');
+    console.error('생성 오류 상세:', e);
   }
 }
 
@@ -863,12 +923,8 @@ function renderTimeline(data,dayIdx){
               ${item.tip?`<div class="mi" style="width:100%;margin-top:2px" contenteditable="true">💡 ${item.tip}</div>`:''}
             </div>
             <div style="display:flex;gap:6px;padding:0.45rem 0.8rem 0.6rem;flex-wrap:wrap">
-              <a class="rc-btn search" style="flex:0 0 auto;padding:0.3rem 0.75rem"
-                href="https://www.google.com/search?q=${encodeURIComponent(item.name+' '+dest)}" target="_blank" rel="noopener">🔍 구글 검색</a>
               <a class="rc-btn map" style="flex:0 0 auto;padding:0.3rem 0.75rem"
                 href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name+' '+dest)}" target="_blank" rel="noopener">🗺 구글 지도</a>
-              <a class="rc-btn navi" style="flex:0 0 auto;padding:0.3rem 0.75rem"
-                href="${item.lat&&item.lng?`https://www.google.com/maps/dir/?api=1&destination=${item.lat},${item.lng}`:`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.name)}`}" target="_blank" rel="noopener">🧭 길찾기</a>
             </div>
           </div>
         </div>
@@ -916,11 +972,7 @@ function renderTimeline(data,dayIdx){
                 const dest=document.getElementById('dest').value||'';
                 const kw=encodeURIComponent((o.imageKeyword||o.genre||'food restaurant').trim().replace(/\s+/g,','));
                 const imgSrc=`https://loremflickr.com/400/200/${kw}?lock=${Math.abs((oi+1)*(idx+1)*(dayIdx+1)*17)}`;
-                const searchQ=encodeURIComponent(`${o.name} ${dest} 맛집`);
                 const mapsQ=encodeURIComponent(`${o.name} ${dest}`);
-                const naviQ=o.lat&&o.lng
-                  ?`https://www.google.com/maps/dir/?api=1&destination=${o.lat},${o.lng}`
-                  :`https://www.google.com/maps/dir/?api=1&destination=${mapsQ}`;
                 return `
               <div class="rc ${oi===0?'sel':''}" onclick="selectResto(this)">
                 <div class="rc-img-wrap">
@@ -939,9 +991,7 @@ function renderTimeline(data,dayIdx){
                   ${o.tip?`<div class="rc-tip">💡 ${o.tip}</div>`:''}
                 </div>
                 <div class="rc-actions" onclick="event.stopPropagation()">
-                  <a class="rc-btn search" href="https://www.google.com/search?q=${searchQ}" target="_blank" rel="noopener">🔍 정보</a>
-                  <a class="rc-btn map" href="https://www.google.com/maps/search/?api=1&query=${mapsQ}" target="_blank" rel="noopener">🗺 지도</a>
-                  <a class="rc-btn navi" href="${naviQ}" target="_blank" rel="noopener">🧭 길찾기</a>
+                  <a class="rc-btn map" href="https://www.google.com/maps/search/?api=1&query=${mapsQ}" target="_blank" rel="noopener">🗺 구글 지도</a>
                 </div>
               </div>`;
               }).join('')}
@@ -1293,14 +1343,13 @@ async function exportExcel(){
   if(hotels.length>0){
     ws0.addRow([]).height=6;
     secHead(ws0,'  🏨 호텔 정보',C.gold);
-    const hh=ws0.addRow(['호텔명','위치','체크인','체크아웃','🔍 검색','🗺 지도']);
+    const hh=ws0.addRow(['호텔명','위치','체크인','체크아웃','🗺 지도']);
     hh.height=20;
     hh.eachCell({includeEmpty:true},c2=>cell(c2,{bg:C.goldLight,fg:C.gold,bold:true,h:'center',bc:C.border}));
     hotels.forEach(h=>{
       const q=encodeURIComponent(h.name+' '+dest);
       const r=ws0.addRow([
         h.name, h.location, h.checkin, h.checkout,
-        lnk('검색','https://www.google.com/search?q='+q),
         lnk('지도','https://www.google.com/maps/search/?api=1&query='+q),
       ]);
       r.height=20;
@@ -1344,20 +1393,18 @@ async function exportExcel(){
       {width:10}, // 소요시간
       {width:12}, // 비용
       {width:26}, // 꿀팁
-      {width:10}, // 검색
-      {width:8},  // 지도
-      {width:8},  // 길찾기
+      {width:10}, // 지도
     ];
 
     // 타이틀
-    ws.mergeCells('A1:J1');
+    ws.mergeCells('A1:I1');
     const dt=ws.getCell('A1');
     dt.value='  Day '+day.day+'  |  '+(day.title||'')+(day.date?'  ('+day.date+')':'');
     cell(dt,{bg:C.forest,fg:C.white,sz:13,bold:true,h:'left',bc:C.forest,thick:true});
     ws.getRow(1).height=34;
 
     // 컬럼 헤더
-    const hdr=['시간','구분','장소 / 내용','세부 설명','소요시간','비용','꿀팁','🔍','🗺','🧭'];
+    const hdr=['시간','구분','장소 / 내용','세부 설명','소요시간','비용','꿀팁','🗺 지도'];
     const hr=ws.addRow(hdr);
     hr.height=22;
     hr.eachCell(c2=>cell(c2,{bg:C.forest2,fg:C.white,sz:10,bold:true,h:'center',bc:C.forest2}));
@@ -1367,15 +1414,12 @@ async function exportExcel(){
       rowNum++;
       const evenBg=rowNum%2===0?C.grayXLight:C.white;
       const q=item.name?encodeURIComponent(item.name+' '+dest):'';
-      const naviUrl=item.lat&&item.lng
-        ?'https://www.google.com/maps/dir/?api=1&destination='+item.lat+','+item.lng
-        :(q?'https://www.google.com/maps/dir/?api=1&destination='+q:'');
 
       if(item.type==='flight'){
         const r=ws.addRow([
           item.departTime||'','✈ 항공',
           (item.from||'')+' → '+(item.to||''),item.note||'',
-          '','','','','',''
+          '','','','',''
         ]);
         r.height=24;
         r.eachCell({includeEmpty:true},(c2,col)=>{
@@ -1388,9 +1432,7 @@ async function exportExcel(){
           item.time||'','🏨 숙소',
           '['+(item.action||'체크인')+'] '+(item.name||''),item.location||'',
           '','',item.tip||'',
-          lnk('검색','https://www.google.com/search?q='+hq),
           lnk('지도','https://www.google.com/maps/search/?api=1&query='+hq),
-          lnk('길찾기',naviUrl||'https://www.google.com/maps/search/?api=1&query='+hq),
         ]);
         r.height=22;
         r.eachCell({includeEmpty:true},(c2,col)=>{
@@ -1405,14 +1447,12 @@ async function exportExcel(){
           item.time||'',item.category||'',
           item.name||'',item.description||'',
           item.duration||'',item.price||'',item.tip||'',
-          q?lnk('검색','https://www.google.com/search?q='+q):'',
           q?lnk('지도','https://www.google.com/maps/search/?api=1&query='+q):'',
-          naviUrl?lnk('길찾기',naviUrl):'',
         ]);
         r.height=item.description&&item.description.length>40?34:22;
         r.eachCell({includeEmpty:true},(c2,col)=>{
           if(col===2){cell(c2,{bg,fg,bold:true,h:'center',bc:C.border});}
-          else if(col>=8){cell(c2,{bg:C.blueLight,fg:C.blue,ul:true,h:'center',bc:C.border});}
+          else if(col===8){cell(c2,{bg:C.blueLight,fg:C.blue,ul:true,h:'center',bc:C.border});}
           else{cell(c2,{bg:evenBg,fg:C.ink,bold:col===3,wrap:col===4||col===7,bc:C.border});}
         });
       }
@@ -1422,7 +1462,7 @@ async function exportExcel(){
           (item.method||'')+' · '+(item.duration||''),
           item.detail||'',item.duration||'',
           item.cost&&item.cost!=='무료'?item.cost:'',
-          '','','',''
+          '','',
         ]);
         r.height=item.detail&&item.detail.length>40?30:20;
         r.eachCell({includeEmpty:true},(c2,col)=>{
@@ -1430,43 +1470,34 @@ async function exportExcel(){
         });
       }
       else if(item.type==='meal'){
-        // 식사 타이틀 행
-        const mq=encodeURIComponent((item.mealType||'식사')+' '+dest);
         const mr=ws.addRow([
           item.time||'',(item.mealType||'식사')+'🍽',
-          '맛집 선택지 (아래 옵션 중 선택)','','','','','','',''
+          '맛집 선택지 (아래 옵션 중 선택)','','','','','',
         ]);
         mr.height=22;
-        mr.eachCell({includeEmpty:true},(c2,col)=>{
+        mr.eachCell({includeEmpty:true},(c2)=>{
           cell(c2,{bg:C.orange,fg:C.white,bold:true,bc:C.orange});
         });
 
-        // 옵션 헤더
-        const oh=ws.addRow(['','','맛집명','설명','웨이팅','가격','꿀팁','🔍','🗺','🧭']);
+        const oh=ws.addRow(['','','맛집명','설명','웨이팅','가격','꿀팁','🗺 지도']);
         oh.height=18;
-        oh.eachCell({includeEmpty:true},(c2,col)=>{
+        oh.eachCell({includeEmpty:true},(c2)=>{
           cell(c2,{bg:C.orangeLight,fg:C.orange,bold:true,h:'center',sz:9,bc:C.border});
         });
 
-        // 옵션들
         (item.options||[]).forEach((o,oi)=>{
           const oq=encodeURIComponent((o.name||'')+' '+dest);
-          const oNavi=o.lat&&o.lng
-            ?'https://www.google.com/maps/dir/?api=1&destination='+o.lat+','+o.lng
-            :'https://www.google.com/maps/dir/?api=1&destination='+oq;
           const obg=oi%2===0?C.orangeLight:'FFFEF7EE';
           const or=ws.addRow([
             '','  '+(oi+1)+'번',
             o.name||'',o.description||'',
             o.waitTime||'',o.price||'',o.tip||'',
-            lnk('검색','https://www.google.com/search?q='+oq),
             lnk('지도','https://www.google.com/maps/search/?api=1&query='+oq),
-            lnk('길찾기',oNavi),
           ]);
           or.height=o.description&&o.description.length>30?30:22;
           or.eachCell({includeEmpty:true},(c2,col)=>{
             if(col===2){cell(c2,{bg:C.orangeLight,fg:C.orange,bold:true,h:'center',sz:9,bc:C.border});}
-            else if(col>=8){cell(c2,{bg:C.blueLight,fg:C.blue,ul:true,h:'center',sz:9,bc:C.border});}
+            else if(col===8){cell(c2,{bg:C.blueLight,fg:C.blue,ul:true,h:'center',sz:9,bc:C.border});}
             else{cell(c2,{bg:obg,fg:C.ink,bold:col===3,wrap:col===4||col===7,sz:9,bc:C.border});}
           });
         });
