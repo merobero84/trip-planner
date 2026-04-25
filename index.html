@@ -221,26 +221,42 @@ Day 1, Day 2... 형식으로 오전/오후/저녁 구분, 구체적 장소명과
 한국어로 작성해주세요.`;
 
   try {
+    // 이미지를 data URL로 변환해서 전달
+    const dataUrl = imgs[0].url; // 이미 readAsDataURL로 읽어둔 값
+
     const response = await puter.ai.chat(
-      [
-        { type: 'file', value: imgs[0].file },
-        { type: 'text', text: prompt }
-      ],
+      prompt,
+      dataUrl,
       { model: 'gemini-2.5-flash' }
     );
 
     dots.style.display = 'none';
 
-    const text = typeof response === 'string'
-      ? response
-      : (response?.message?.content?.[0]?.text || response?.text || String(response));
+    // 응답 텍스트 추출
+    let text = '';
+    if (typeof response === 'string') {
+      text = response;
+    } else if (response?.message?.content) {
+      const content = response.message.content;
+      if (Array.isArray(content)) {
+        text = content.map(c => c.text || '').join('');
+      } else {
+        text = String(content);
+      }
+    } else if (response?.text) {
+      text = response.text;
+    } else {
+      text = JSON.stringify(response);
+    }
 
     plan.innerHTML = `<p>${md(text)}</p>`;
 
   } catch (e) {
     dots.style.display = 'none';
     result.classList.remove('on');
-    showErr('오류: ' + (e?.message || String(e)));
+    // 오류 메시지 제대로 추출
+    const msg = e?.message || e?.error?.message || (typeof e === 'string' ? e : JSON.stringify(e));
+    showErr('오류: ' + msg);
   }
 
   btn.disabled = false;
