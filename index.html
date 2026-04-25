@@ -19,41 +19,82 @@
   --green:#16A34A;--green-bg:#F0FDF4;--green-border:#BBF7D0;
   --purple:#7C3AED;--purple-bg:#F5F3FF;
   --orange:#EA580C;--orange-bg:#FFF7ED;--orange-border:#FED7AA;
-  --gray-bg:#F9F9F9;
+  --sky:#0284C7;--sky-bg:#F0F9FF;
 }
 body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px}
 nav{background:var(--forest);padding:0 1.5rem;display:flex;align-items:center;gap:1rem;height:52px;position:sticky;top:0;z-index:200}
 .logo{font-size:1.1rem;font-weight:600;color:#fff;letter-spacing:-0.02em}
 .logo em{color:#F0C060;font-style:normal}
 .nav-sub{font-size:0.65rem;color:rgba(255,255,255,0.4);letter-spacing:0.06em;text-transform:uppercase}
-.app{display:grid;grid-template-columns:320px 1fr;min-height:calc(100vh - 52px)}
+.app{display:grid;grid-template-columns:340px 1fr;min-height:calc(100vh - 52px)}
 
 /* SIDEBAR */
-.sidebar{background:var(--white);border-right:1px solid var(--border);overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:0.85rem}
-.slabel{font-size:0.63rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.3rem}
-.field label{display:block;font-size:0.78rem;font-weight:500;margin-bottom:0.28rem}
-.field input,.field select,.field textarea{width:100%;padding:0.45rem 0.65rem;border:1px solid var(--border);border-radius:6px;font-family:'Pretendard',sans-serif;font-size:0.83rem;color:var(--ink);background:var(--white);outline:none;transition:border-color 0.15s;appearance:none}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--forest2)}
-.field textarea{resize:vertical;min-height:58px;line-height:1.5}
-.field-row{display:grid;grid-template-columns:1fr 1fr;gap:0.55rem}
+.sidebar{background:var(--white);border-right:1px solid var(--border);overflow-y:auto;padding:1.25rem 1.1rem;display:flex;flex-direction:column;gap:0}
+.sec{margin-bottom:1.1rem}
+.slabel{font-size:0.63rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:0.45rem;display:flex;align-items:center;gap:0.4rem}
+.field{margin-bottom:0.6rem}
+.field label{display:block;font-size:0.75rem;font-weight:500;margin-bottom:0.22rem;color:var(--muted)}
+input[type=text],input[type=date],input[type=time],select,textarea{
+  width:100%;padding:0.42rem 0.65rem;border:1px solid var(--border);border-radius:6px;
+  font-family:'Pretendard',sans-serif;font-size:0.82rem;color:var(--ink);
+  background:var(--white);outline:none;transition:border-color 0.15s;appearance:none
+}
+input:focus,select:focus,textarea:focus{border-color:var(--forest2)}
+textarea{resize:vertical;min-height:52px;line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.4rem}
+hr.div{border:none;border-top:1px solid var(--border);margin:0.9rem 0}
+
+/* FLIGHT BLOCK */
+.flight-block{background:var(--sky-bg);border:1px solid #BAE6FD;border-radius:8px;padding:0.75rem 0.85rem;margin-bottom:0.5rem}
+.flight-head{font-size:0.75rem;font-weight:600;color:var(--sky);margin-bottom:0.6rem;display:flex;align-items:center;gap:0.4rem}
+.flight-route{display:flex;align-items:center;gap:0.4rem;margin-bottom:0.5rem}
+.flight-ap{flex:1}
+.flight-ap input{text-align:center;font-weight:600;font-size:0.85rem}
+.flight-arrow{font-size:0.9rem;color:var(--sky);flex-shrink:0}
+
+/* TOGGLE SWITCH */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0}
+.toggle-row label{font-size:0.8rem;font-weight:500;color:var(--ink)}
+.toggle-row small{font-size:0.7rem;color:var(--muted);display:block;margin-top:1px}
+.switch{position:relative;width:36px;height:20px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch-slider{position:absolute;inset:0;background:var(--border);border-radius:20px;cursor:pointer;transition:background 0.2s}
+.switch-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform 0.2s}
+.switch input:checked+.switch-slider{background:var(--forest)}
+.switch input:checked+.switch-slider::before{transform:translateX(16px)}
+
+/* HOTEL CARDS */
+.hotel-list{display:flex;flex-direction:column;gap:0.5rem}
+.hotel-card{background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:8px;padding:0.65rem 0.75rem;position:relative}
+.hotel-card .hotel-num{font-size:0.68rem;font-weight:600;color:var(--gold);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.05em}
+.hotel-rm{position:absolute;top:0.5rem;right:0.5rem;background:none;border:none;cursor:pointer;font-size:0.8rem;color:var(--muted)}
+.hotel-rm:hover{color:var(--red)}
+.add-hotel-btn{display:flex;align-items:center;justify-content:center;gap:0.4rem;width:100%;padding:0.45rem;border:1.5px dashed var(--gold-border);border-radius:7px;background:transparent;color:var(--gold);font-family:'Pretendard',sans-serif;font-size:0.78rem;font-weight:500;cursor:pointer;transition:all 0.15s;margin-top:0.4rem}
+.add-hotel-btn:hover{background:var(--gold-bg);border-color:var(--gold)}
+
+/* UPLOAD */
 .upload-zone{border:1.5px dashed var(--border);border-radius:7px;padding:0.9rem;text-align:center;cursor:pointer;position:relative;background:var(--bg);transition:all 0.15s}
 .upload-zone:hover{border-color:var(--forest2);background:var(--forest-bg)}
 .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .upload-zone p{font-size:0.72rem;color:var(--muted);line-height:1.5}
-.thumb-row{display:flex;flex-wrap:wrap;gap:5px}
+.thumb-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .thumb-wrap{position:relative}
-.thumb{width:46px;height:46px;border-radius:5px;object-fit:cover;display:block}
+.thumb{width:44px;height:44px;border-radius:5px;object-fit:cover;display:block}
 .thumb-rm{position:absolute;top:-4px;right:-4px;width:15px;height:15px;background:var(--red);border:none;border-radius:50%;color:#fff;font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.btn{display:block;width:100%;padding:0.65rem;background:var(--forest);color:#fff;border:none;border-radius:7px;font-family:'Pretendard',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;transition:background 0.15s,transform 0.1s;text-align:center;margin-top:0.25rem}
+
+/* BUTTON */
+.btn{display:block;width:100%;padding:0.65rem;background:var(--forest);color:#fff;border:none;border-radius:7px;font-family:'Pretendard',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;transition:background 0.15s,transform 0.1s;text-align:center}
 .btn:hover{background:var(--forest2)}
-.btn:active{transform:scale(0.99)}
 .btn:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none}
-.err-msg{background:var(--red-bg);border:1px solid #FCA5A5;border-radius:6px;padding:0.6rem 0.8rem;font-size:0.78rem;color:var(--red);display:none}
-hr{border:none;border-top:1px solid var(--border)}
+.btn-sm{width:auto;display:inline-block;padding:0.3rem 0.65rem;font-size:0.75rem;border-radius:5px}
+.btn-outline{background:transparent;color:var(--forest);border:1px solid var(--forest)}
+.btn-outline:hover{background:var(--forest-bg)}
+.err-msg{background:var(--red-bg);border:1px solid #FCA5A5;border-radius:6px;padding:0.6rem 0.8rem;font-size:0.78rem;color:var(--red);display:none;margin-top:0.5rem}
 
 /* MAIN */
 .main{overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1rem}
-.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 2rem;gap:0.6rem;color:var(--muted);text-align:center;flex:1}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 2rem;gap:0.6rem;color:var(--muted);text-align:center}
 .empty-icon{font-size:3rem;margin-bottom:0.5rem}
 .loading-state{display:none;flex-direction:column;align-items:center;justify-content:center;padding:4rem;gap:0.75rem;color:var(--muted)}
 .loading-state.on{display:flex}
@@ -68,74 +109,89 @@ hr{border:none;border-top:1px solid var(--border)}
 
 /* CARD */
 .card{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.card-head{padding:0.75rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.card-title{font-size:0.82rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em}
+.card-head{padding:0.7rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:0.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em}
 
 /* MAP */
 #map{height:300px}
 
 /* TABS */
-.tabs{display:flex;gap:3px;padding:0.75rem 1rem 0;background:var(--white);border-bottom:1px solid var(--border)}
-.tab{flex-shrink:0;padding:0.35rem 1rem;border-radius:6px 6px 0 0;border:1px solid transparent;background:transparent;color:var(--muted);font-size:0.8rem;font-weight:500;cursor:pointer;transition:all 0.15s;font-family:'Pretendard',sans-serif}
+.tabs{display:flex;gap:3px;padding:0.75rem 1rem 0;background:var(--white);border-bottom:1px solid var(--border);overflow-x:auto}
+.tab{flex-shrink:0;padding:0.35rem 0.9rem;border-radius:6px 6px 0 0;border:1px solid transparent;background:transparent;color:var(--muted);font-size:0.78rem;font-weight:500;cursor:pointer;font-family:'Pretendard',sans-serif;transition:all 0.12s}
 .tab:hover{color:var(--ink);background:var(--bg)}
 .tab.active{background:var(--white);color:var(--forest);font-weight:600;border-color:var(--border);border-bottom-color:var(--white);margin-bottom:-1px}
 
 /* TIMELINE */
-.timeline{padding:0.5rem 1rem 1rem;display:flex;flex-direction:column;gap:0}
+.timeline{padding:0.75rem 1rem 1.25rem;display:flex;flex-direction:column}
+.tl-row{display:flex;gap:0.7rem;align-items:flex-start}
+.dot-col{display:flex;flex-direction:column;align-items:center;width:26px;flex-shrink:0}
+.dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;border:2px solid var(--white);box-shadow:0 1px 4px rgba(0,0,0,0.18)}
+.dot-line{width:2px;flex:1;min-height:10px;background:var(--border)}
+.tl-body{flex:1;padding:0.4rem 0 0.2rem;min-width:0}
 
-/* PLACE ROW */
-.place-row{display:flex;gap:0.75rem;align-items:flex-start}
-.place-dot-col{display:flex;flex-direction:column;align-items:center;width:28px;flex-shrink:0}
-.place-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.2)}
-.dot-line{width:2px;flex:1;min-height:12px;background:var(--border)}
-.place-body{flex:1;padding:0.5rem 0 0.25rem;min-width:0}
-.place-header{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.2rem;cursor:pointer}
-.place-time{font-size:0.72rem;color:var(--muted);font-weight:500;white-space:nowrap}
-.place-name{font-size:0.9rem;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.place-badge{flex-shrink:0}
-.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:0.65rem;font-weight:600}
+/* PLACE */
+.place-header{display:flex;align-items:center;gap:0.45rem;cursor:pointer;padding:0.1rem 0}
+.place-time{font-size:0.7rem;color:var(--muted);font-weight:500;white-space:nowrap;min-width:36px}
+.place-name{font-size:0.88rem;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{display:inline-block;padding:1px 7px;border-radius:20px;font-size:0.63rem;font-weight:600;white-space:nowrap}
 .badge-관광{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
 .badge-식사{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-border)}
-.badge-이동{background:var(--gray-bg);color:var(--muted);border:1px solid var(--border)}
+.badge-이동{background:#F9F9F9;color:var(--muted);border:1px solid var(--border)}
 .badge-숙소{background:var(--purple-bg);color:var(--purple)}
 .badge-쇼핑{background:var(--red-bg);color:var(--red)}
 .badge-액티비티{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
-.expand-icon{font-size:0.7rem;color:var(--muted);transition:transform 0.2s;flex-shrink:0}
-.expanded .expand-icon{transform:rotate(180deg)}
+.badge-비행{background:var(--sky-bg);color:var(--sky);border:1px solid #BAE6FD}
+.chevron{font-size:0.65rem;color:var(--muted);transition:transform 0.18s;flex-shrink:0}
+.expanded .chevron{transform:rotate(180deg)}
 
-/* PLACE DETAIL */
-.place-detail{display:none;margin-top:0.5rem;border-radius:8px;background:var(--bg);border:1px solid var(--border);overflow:hidden}
+.place-detail{display:none;margin-top:0.45rem;border-radius:7px;background:var(--bg);border:1px solid var(--border);overflow:hidden}
 .place-detail.open{display:block}
-.detail-desc{padding:0.65rem 0.85rem;font-size:0.8rem;color:var(--muted);line-height:1.6;border-bottom:1px solid var(--border)}
-.detail-meta{display:flex;gap:1rem;padding:0.5rem 0.85rem;flex-wrap:wrap}
-.meta-item{display:flex;align-items:center;gap:0.3rem;font-size:0.75rem;color:var(--muted)}
-.meta-item strong{color:var(--ink)}
+.detail-desc{padding:0.6rem 0.8rem;font-size:0.78rem;color:#444;line-height:1.65;border-bottom:1px solid var(--border)}
+.detail-meta{display:flex;gap:0.75rem;flex-wrap:wrap;padding:0.45rem 0.8rem}
+.mi{font-size:0.73rem;color:var(--muted);display:flex;align-items:center;gap:0.25rem}
+.mi strong{color:var(--ink)}
 
-/* RESTAURANT OPTIONS */
-.resto-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.5rem;padding:0.65rem 0.85rem}
-.resto-card{border:2px solid var(--border);border-radius:7px;padding:0.65rem;cursor:pointer;transition:all 0.15s;background:var(--white)}
-.resto-card:hover{border-color:var(--forest2);background:var(--forest-bg)}
-.resto-card.selected{border-color:var(--forest);background:var(--forest-bg)}
-.resto-card.selected .rc-name::before{content:"✓ ";color:var(--forest)}
-.rc-name{font-size:0.82rem;font-weight:600;margin-bottom:3px}
-.rc-genre{font-size:0.7rem;color:var(--muted);margin-bottom:4px}
-.rc-desc{font-size:0.72rem;color:var(--muted);line-height:1.4;margin-bottom:6px}
-.rc-meta{display:flex;gap:0.5rem;flex-wrap:wrap}
-.rc-tag{font-size:0.65rem;background:var(--orange-bg);color:var(--orange);padding:1px 6px;border-radius:10px;border:1px solid var(--orange-border)}
-.rc-tag.price{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+/* TRANSPORT */
+.tr-row{display:flex;gap:0.7rem}
+.tr-line-col{display:flex;flex-direction:column;align-items:center;width:26px;flex-shrink:0}
+.tr-vline{width:2px;flex:1;background:var(--border)}
+.tr-body{flex:1;padding:0.25rem 0 0.25rem}
+.tr-pill{display:inline-flex;align-items:center;gap:0.35rem;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:0.25rem 0.6rem;font-size:0.73rem;color:var(--muted)}
+.tr-pill .method{font-weight:600;color:var(--ink)}
+.tr-detail{margin-top:0.2rem;font-size:0.7rem;color:var(--muted);line-height:1.55;padding-left:0.1rem}
 
-/* TRANSPORT ROW */
-.transport-row{display:flex;gap:0.75rem;align-items:stretch;margin:0}
-.transport-line-col{display:flex;flex-direction:column;align-items:center;width:28px;flex-shrink:0}
-.t-line{width:2px;flex:1;background:var(--border)}
-.transport-body{flex:1;padding:0.3rem 0}
-.transport-pill{display:inline-flex;align-items:center;gap:0.4rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:0.3rem 0.65rem;font-size:0.75rem;color:var(--muted)}
-.transport-pill .method{font-weight:600;color:var(--ink)}
-.transport-detail{margin-top:0.25rem;font-size:0.72rem;color:var(--muted);padding-left:0.2rem;line-height:1.5}
+/* FLIGHT ITEM */
+.flight-item{background:var(--sky-bg);border:1px solid #BAE6FD;border-radius:8px;padding:0.65rem 0.85rem;margin-top:0.35rem}
+.fi-route{display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;font-weight:600;margin-bottom:0.35rem}
+.fi-arrow{color:var(--sky)}
+.fi-meta{display:flex;gap:0.75rem;flex-wrap:wrap}
+.fi-tag{font-size:0.7rem;color:var(--sky);background:rgba(2,132,199,0.08);padding:2px 7px;border-radius:10px}
+
+/* HOTEL ITEM */
+.hotel-item{background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:8px;padding:0.6rem 0.8rem;margin-top:0.35rem}
+.hi-name{font-size:0.85rem;font-weight:600;margin-bottom:0.25rem}
+.hi-meta{display:flex;gap:0.6rem;flex-wrap:wrap}
+.hi-tag{font-size:0.7rem;color:var(--gold);background:rgba(201,151,58,0.1);padding:2px 7px;border-radius:10px}
+
+/* MEAL OPTIONS */
+.meal-opts-label{padding:0.4rem 0.8rem 0.2rem;font-size:0.72rem;color:var(--muted)}
+.resto-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.45rem;padding:0.3rem 0.7rem 0.7rem}
+.rc{border:2px solid var(--border);border-radius:7px;padding:0.6rem 0.7rem;cursor:pointer;transition:all 0.15s;background:var(--white)}
+.rc:hover{border-color:var(--forest2);background:var(--forest-bg)}
+.rc.sel{border-color:var(--forest);background:var(--forest-bg)}
+.rc .rn{font-size:0.82rem;font-weight:600;margin-bottom:2px}
+.rc.sel .rn::before{content:"✓ ";color:var(--forest)}
+.rc .rg{font-size:0.68rem;color:var(--muted);margin-bottom:4px}
+.rc .rd{font-size:0.7rem;color:var(--muted);line-height:1.4;margin-bottom:5px}
+.rc-tags{display:flex;gap:4px;flex-wrap:wrap}
+.rc-tag{font-size:0.63rem;padding:1px 5px;border-radius:9px}
+.rc-tag.price{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.rc-tag.wait{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-border)}
+.rc .rt{font-size:0.67rem;color:var(--muted);margin-top:4px}
 
 /* TIPS */
 .tips-list{list-style:none;display:flex;flex-direction:column;gap:6px;padding:0.75rem 1rem}
-.tips-list li{display:flex;gap:0.5rem;font-size:0.82rem;line-height:1.5}
+.tips-list li{display:flex;gap:0.45rem;font-size:0.8rem;line-height:1.55}
 .tips-list li::before{content:"✦";color:var(--gold);flex-shrink:0;margin-top:1px}
 
 ::-webkit-scrollbar{width:4px;height:4px}
@@ -150,64 +206,131 @@ hr{border:none;border-top:1px solid var(--border)}
 
 <div class="app">
 <aside class="sidebar">
-  <div>
-    <p class="slabel">목적지</p>
-    <div class="field"><input type="text" id="dest" placeholder="예: 오사카, 일본" /></div>
-  </div>
-  <div class="field-row">
-    <div class="field"><label>출발일</label><input type="date" id="startdate"/></div>
-    <div class="field"><label>귀국일</label><input type="date" id="enddate"/></div>
-  </div>
-  <div class="field-row">
-    <div class="field"><label>인원</label>
-      <select id="people">
-        <option>1명</option><option>2명</option><option selected>3~5명</option>
-        <option>6명 이상</option><option>가족(아이 포함)</option>
+
+  <!-- 기본 정보 -->
+  <div class="sec">
+    <p class="slabel">🌏 기본 정보</p>
+    <div class="field"><label>목적지</label><input type="text" id="dest" placeholder="예: 오사카, 일본"/></div>
+    <div class="row2">
+      <div class="field"><label>인원</label>
+        <select id="people">
+          <option>1명</option><option>2명</option><option selected>3~5명</option>
+          <option>6명 이상</option><option>가족(아이 포함)</option>
+        </select>
+      </div>
+      <div class="field"><label>예산</label>
+        <select id="budget">
+          <option>저예산</option><option selected>중간</option><option>넉넉하게</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>여행 스타일</label>
+      <select id="style">
+        <option>알차게 관광</option><option>여유롭게 힐링</option>
+        <option selected>맛집 위주</option><option>액티비티 위주</option>
+        <option>문화/역사 탐방</option><option>자연 속 힐링</option><option>쇼핑 위주</option>
       </select>
     </div>
-    <div class="field"><label>예산</label>
-      <select id="budget">
-        <option>저예산</option><option selected>중간</option><option>넉넉하게</option>
-      </select>
+    <div class="field"><label>특별 요청사항 (선택)</label>
+      <textarea id="extra" placeholder="예: 채식, 유모차 가능한 곳, 영어 메뉴..."></textarea>
     </div>
   </div>
-  <div class="field"><label>여행 스타일</label>
-    <select id="style">
-      <option>알차게 관광</option><option>여유롭게 힐링</option>
-      <option selected>맛집 위주</option><option>액티비티 위주</option>
-      <option>문화/역사 탐방</option><option>자연 속 힐링</option><option>쇼핑 위주</option>
-    </select>
+
+  <hr class="div"/>
+
+  <!-- 항공편 -->
+  <div class="sec">
+    <p class="slabel">✈️ 항공편</p>
+
+    <div class="flight-block">
+      <div class="flight-head">✈ 가는 편</div>
+      <div class="flight-route">
+        <div class="flight-ap"><input type="text" id="dep-ap" placeholder="출발 공항" style="text-align:center"/></div>
+        <div class="flight-arrow">→</div>
+        <div class="flight-ap"><input type="text" id="arr-ap" placeholder="도착 공항" style="text-align:center"/></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>출발 일시</label><input type="date" id="dep-date"/></div>
+        <div class="field"><label>출발 시간</label><input type="time" id="dep-time" value="08:00"/></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>도착 일시</label><input type="date" id="arr-date"/></div>
+        <div class="field"><label>도착 시간</label><input type="time" id="arr-time" value="10:30"/></div>
+      </div>
+    </div>
+
+    <div class="flight-block">
+      <div class="flight-head">✈ 오는 편</div>
+      <div class="flight-route">
+        <div class="flight-ap"><input type="text" id="ret-dep-ap" placeholder="출발 공항" style="text-align:center"/></div>
+        <div class="flight-arrow">→</div>
+        <div class="flight-ap"><input type="text" id="ret-arr-ap" placeholder="도착 공항" style="text-align:center"/></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>출발 일시</label><input type="date" id="ret-dep-date"/></div>
+        <div class="field"><label>출발 시간</label><input type="time" id="ret-dep-time" value="18:00"/></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>도착 일시</label><input type="date" id="ret-arr-date"/></div>
+        <div class="field"><label>도착 시간</label><input type="time" id="ret-arr-time" value="20:30"/></div>
+      </div>
+    </div>
   </div>
-  <div class="field"><label>특별 요청사항 (선택)</label>
-    <textarea id="extra" placeholder="예: 채식, 유모차 가능한 곳, 영어 메뉴 필요..."></textarea>
+
+  <hr class="div"/>
+
+  <!-- 호텔 -->
+  <div class="sec">
+    <div class="toggle-row">
+      <div>
+        <label for="hotel-toggle">🏨 호텔 직접 입력</label>
+        <small>체크 해제 시 AI가 자동 추천</small>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="hotel-toggle" onchange="toggleHotels(this.checked)"/>
+        <span class="switch-slider"></span>
+      </label>
+    </div>
+    <div id="hotel-section" style="display:none;margin-top:0.5rem">
+      <div class="hotel-list" id="hotel-list"></div>
+      <button class="add-hotel-btn" onclick="addHotel()">+ 호텔 추가</button>
+    </div>
   </div>
-  <hr/>
-  <div>
-    <p class="slabel">참고 사진 (선택)</p>
+
+  <hr class="div"/>
+
+  <!-- 사진 -->
+  <div class="sec">
+    <p class="slabel">📷 참고 사진 (선택)</p>
     <div class="upload-zone" id="zone">
       <input type="file" id="fileinput" multiple accept="image/*" onchange="handleFiles(this.files)"/>
-      <p>📷 가고 싶은 곳 사진을 올리면<br>AI가 참고해서 플랜을 짜줘요</p>
+      <p>가고 싶은 곳 사진을 올리면<br>AI가 참고해서 플랜을 짜줘요</p>
     </div>
-    <div class="thumb-row" id="thumbrow" style="margin-top:6px"></div>
+    <div class="thumb-row" id="thumbrow"></div>
   </div>
+
   <div class="err-msg" id="errmsg"></div>
-  <button class="btn" id="genbtn" onclick="generate()">✦ 여행 플랜 생성하기</button>
+  <button class="btn" id="genbtn" onclick="generate()" style="margin-top:0.5rem">✦ 여행 플랜 생성하기</button>
+
 </aside>
 
-<main class="main" id="mainarea">
+<main class="main">
   <div class="empty-state" id="emptystate">
-    <div class="empty-icon">🗺️</div>
-    <strong style="font-size:0.95rem">여행 정보를 입력하고 플랜을 생성해보세요</strong>
-    <p>AI가 맛집 선택지 + 교통 상세 + 지도 동선을 만들어줘요</p>
+    <div class="empty-icon">✈️</div>
+    <strong style="font-size:0.95rem">항공편 정보와 여행 조건을 입력하고<br>플랜을 생성해보세요</strong>
+    <p style="font-size:0.77rem;margin-top:4px;line-height:1.6">실제 체류 시간에 맞춰 일정을 짜고<br>맛집 선택지 · 교통 상세 · 지도 동선을 만들어줘요</p>
   </div>
   <div class="loading-state" id="loadingstate">
     <div class="spinner"></div>
     <span id="loadmsg">여행 플랜을 만들고 있어요...</span>
   </div>
-  <div id="result" style="display:none;display:flex;flex-direction:column;gap:1rem">
+  <div id="result" style="display:none;flex-direction:column;gap:1rem">
     <div class="summary-grid" id="summaryGrid"></div>
     <div class="card">
-      <div class="card-head"><span class="card-title">📍 동선 지도</span><span id="maplabel" style="font-size:0.72rem;color:var(--muted)"></span></div>
+      <div class="card-head">
+        <span class="card-title">📍 동선 지도</span>
+        <span id="maplabel" style="font-size:0.72rem;color:var(--muted)"></span>
+      </div>
       <div id="map"></div>
     </div>
     <div class="card" style="padding:0">
@@ -223,10 +346,12 @@ hr{border:none;border-top:1px solid var(--border)}
 </div>
 
 <script>
+// ── STATE ──
 const imgs=[];
 let tripData=null,currentDay=0,leafletMap=null,mapMarkers=[],mapLines=[];
+let hotelCount=0;
 
-// upload
+// ── UPLOAD ──
 const zone=document.getElementById('zone');
 zone.addEventListener('dragover',e=>{e.preventDefault();zone.style.borderColor='var(--forest2)'});
 zone.addEventListener('dragleave',()=>zone.style.borderColor='');
@@ -240,8 +365,7 @@ function handleFiles(files){
   }
 }
 function renderThumbs(){
-  const row=document.getElementById('thumbrow');
-  row.innerHTML='';
+  const row=document.getElementById('thumbrow');row.innerHTML='';
   imgs.forEach((img,i)=>{
     const w=document.createElement('div');w.className='thumb-wrap';
     w.innerHTML=`<img src="${img.url}" class="thumb"/><button class="thumb-rm" onclick="removeImg(${i})">✕</button>`;
@@ -250,9 +374,40 @@ function renderThumbs(){
 }
 function removeImg(i){imgs.splice(i,1);renderThumbs()}
 
+// ── HOTELS ──
+function toggleHotels(on){
+  document.getElementById('hotel-section').style.display=on?'block':'none';
+  if(on&&document.getElementById('hotel-list').children.length===0) addHotel();
+}
+function addHotel(){
+  hotelCount++;
+  const id=`hotel-${hotelCount}`;
+  const div=document.createElement('div');
+  div.className='hotel-card';div.id=id;
+  const depDate=document.getElementById('dep-date').value||'';
+  const retDate=document.getElementById('ret-dep-date').value||'';
+  div.innerHTML=`
+    <div class="hotel-num">호텔 ${hotelCount}</div>
+    <button class="hotel-rm" onclick="removeHotel('${id}')">✕</button>
+    <div class="field"><label>호텔 이름</label><input type="text" placeholder="예: 도톤보리 호텔"/></div>
+    <div class="row2">
+      <div class="field"><label>체크인</label><input type="date" value="${depDate}"/></div>
+      <div class="field"><label>체크아웃</label><input type="date" value="${retDate}"/></div>
+    </div>
+    <div class="field"><label>주소 / 위치 (선택)</label><input type="text" placeholder="예: 난바 근처"/></div>`;
+  document.getElementById('hotel-list').appendChild(div);
+}
+function removeHotel(id){document.getElementById(id).remove()}
+function getHotels(){
+  return [...document.getElementById('hotel-list').children].map(card=>{
+    const inputs=card.querySelectorAll('input');
+    return{name:inputs[0].value,checkin:inputs[1].value,checkout:inputs[2].value,location:inputs[3].value};
+  }).filter(h=>h.name);
+}
+
+// ── HELPERS ──
 function showErr(msg){const e=document.getElementById('errmsg');e.textContent=msg;e.style.display='block'}
 function hideErr(){document.getElementById('errmsg').style.display='none'}
-
 function setLoading(on){
   document.getElementById('loadingstate').classList.toggle('on',on);
   document.getElementById('emptystate').style.display=on?'none':'';
@@ -261,29 +416,63 @@ function setLoading(on){
   document.getElementById('genbtn').textContent=on?'생성 중...':'✦ 여행 플랜 생성하기';
 }
 
+// ── GENERATE ──
 async function generate(){
   hideErr();
   const dest=document.getElementById('dest').value.trim();
   if(!dest){showErr('목적지를 입력해주세요');return}
-  const start=document.getElementById('startdate').value;
-  const end=document.getElementById('enddate').value;
+
+  const depDate=document.getElementById('dep-date').value;
+  const depTime=document.getElementById('dep-time').value;
+  const arrDate=document.getElementById('arr-date').value;
+  const arrTime=document.getElementById('arr-time').value;
+  const retDepDate=document.getElementById('ret-dep-date').value;
+  const retDepTime=document.getElementById('ret-dep-time').value;
+  const retArrDate=document.getElementById('ret-arr-date').value;
+  const retArrTime=document.getElementById('ret-arr-time').value;
+  const depAp=document.getElementById('dep-ap').value||'출발 공항';
+  const arrAp=document.getElementById('arr-ap').value||'도착 공항';
+  const retDepAp=document.getElementById('ret-dep-ap').value||arrAp;
+  const retArrAp=document.getElementById('ret-arr-ap').value||depAp;
+
   const people=document.getElementById('people').value;
-  const style=document.getElementById('style').value;
   const budget=document.getElementById('budget').value;
+  const style=document.getElementById('style').value;
   const extra=document.getElementById('extra').value.trim();
+  const hotels=document.getElementById('hotel-toggle').checked?getHotels():[];
+
   let days=3;
-  if(start&&end){const d=Math.round((new Date(end)-new Date(start))/(86400000));if(d>0)days=d+1}
+  if(arrDate&&retDepDate){
+    const d=Math.round((new Date(retDepDate)-new Date(arrDate))/86400000);
+    if(d>=0) days=d+1;
+  }
 
   setLoading(true);
 
-  const prompt=`당신은 여행 플래너 전문가입니다. 아래 조건으로 상세한 여행 일정을 만들어주세요.
+  const flightInfo=`
+가는 편: ${depDate||'미정'} ${depTime} ${depAp} 출발 → ${arrDate||'미정'} ${arrTime} ${arrAp} 도착
+오는 편: ${retDepDate||'미정'} ${retDepTime} ${retDepAp} 출발 → ${retArrDate||'미정'} ${retArrTime} ${retArrAp} 도착`;
+
+  const hotelInfo=hotels.length>0
+    ?'\n숙소 정보:\n'+hotels.map((h,i)=>`  호텔${i+1}: ${h.name} (체크인 ${h.checkin}, 체크아웃 ${h.checkout}${h.location?', 위치: '+h.location:''})`).join('\n')
+    :'\n숙소: AI가 지역별 추천';
+
+  const prompt=`당신은 여행 플래너 전문가입니다. 아래 조건으로 현실적인 여행 일정을 JSON으로만 출력하세요.
 
 목적지: ${dest}
-기간: ${days}일
+총 체류: ${days}일
 인원: ${people} / 예산: ${budget} / 스타일: ${style}
 ${extra?'요청: '+extra:''}
 
-반드시 아래 JSON 형식만 출력하세요. 다른 텍스트 없이 JSON만:
+항공편 정보:${flightInfo}
+${hotelInfo}
+
+⚠️ 중요 규칙:
+- 첫날: 도착 시간(${arrTime||'?'}) 이후부터 일정을 시작하고, 공항에서 숙소까지 이동 시간 반영
+- 마지막날: 귀국 항공편(${retDepTime||'?'}) 기준으로 공항 도착 2시간 전에 출발, 그 이전에만 일정 배치
+- 호텔이 지정된 경우 체크인/체크아웃을 일정에 포함
+- 각 장소 이동시간을 현실적으로 반영
+- 반드시 JSON만 출력, 다른 텍스트 금지
 
 {
   "destination": "도시명, 국가",
@@ -293,70 +482,82 @@ ${extra?'요청: '+extra:''}
   "days": [
     {
       "day": 1,
+      "date": "${arrDate||''}",
       "title": "1일차 부제목",
       "items": [
         {
+          "type": "flight",
+          "label": "가는 편 도착",
+          "from": "${depAp}",
+          "to": "${arrAp}",
+          "departTime": "${depDate} ${depTime}",
+          "arriveTime": "${arrDate} ${arrTime}",
+          "note": "입국 심사 및 수하물 수령 약 30~60분 소요"
+        },
+        {
+          "type": "transport",
+          "method": "공항철도|버스|택시 등",
+          "duration": "약 ?분",
+          "detail": "공항에서 숙소까지 구체적 경로 설명",
+          "cost": "금액"
+        },
+        {
+          "type": "hotel",
+          "action": "체크인",
+          "name": "호텔명 (지정 없으면 추천 호텔명)",
+          "time": "15:00",
+          "location": "지역명",
+          "lat": 위도숫자,
+          "lng": 경도숫자,
+          "tip": "호텔 관련 팁"
+        },
+        {
           "type": "place",
-          "time": "09:00",
-          "name": "장소명 (한국어)",
+          "time": "17:00",
+          "name": "장소명",
           "category": "관광|식사|숙소|쇼핑|액티비티 중 하나",
           "duration": "1시간 30분",
-          "description": "장소 설명 2~3문장. 볼거리, 특징, 팁 포함.",
-          "hours": "09:00~18:00",
-          "price": "무료 또는 금액",
-          "tip": "현지 꿀팁 한 문장",
+          "description": "장소 설명 2~3문장",
+          "hours": "운영시간",
+          "price": "입장료 또는 무료",
+          "tip": "현지 꿀팁",
           "lat": 위도숫자,
           "lng": 경도숫자
         },
         {
           "type": "transport",
-          "method": "지하철|버스|도보|택시|기타",
+          "method": "도보|지하철|버스|택시",
           "duration": "약 10분",
-          "detail": "구체적 이동 방법. 예: 미도스지선 난바역 승차 → 신사이바시역 하차 (2분, ¥180) 후 3번 출구로 나와 도보 5분",
-          "cost": "¥180 또는 무료"
+          "detail": "구체적 이동 방법 (노선명, 역명, 출구번호 등)",
+          "cost": "금액 또는 무료"
         },
         {
           "type": "meal",
-          "time": "12:00",
-          "mealType": "점심|저녁|아침|카페",
+          "time": "19:00",
+          "mealType": "저녁",
           "options": [
             {
-              "name": "맛집 이름",
-              "genre": "장르 (라멘, 스시 등)",
-              "description": "음식점 설명 2문장. 분위기, 대표메뉴 포함.",
-              "price": "1인 예산 (예: ¥1,000~1,500)",
-              "waitTime": "웨이팅 여부 (예: 웨이팅 없음, 30분 대기 가능)",
-              "tip": "주문 팁이나 추천 메뉴",
+              "name": "맛집명",
+              "genre": "장르",
+              "description": "설명 2문장",
+              "price": "1인 예산",
+              "waitTime": "웨이팅 여부",
+              "tip": "추천 메뉴 또는 팁",
               "lat": 위도숫자,
               "lng": 경도숫자
             },
-            {
-              "name": "맛집 이름2",
-              "genre": "장르",
-              "description": "설명",
-              "price": "예산",
-              "waitTime": "웨이팅",
-              "tip": "팁",
-              "lat": 위도숫자,
-              "lng": 경도숫자
-            },
-            {
-              "name": "맛집 이름3",
-              "genre": "장르",
-              "description": "설명",
-              "price": "예산",
-              "waitTime": "웨이팅",
-              "tip": "팁",
-              "lat": 위도숫자,
-              "lng": 경도숫자
-            }
+            {"name":"맛집2","genre":"장르","description":"설명","price":"예산","waitTime":"웨이팅","tip":"팁","lat":위도,"lng":경도},
+            {"name":"맛집3","genre":"장르","description":"설명","price":"예산","waitTime":"웨이팅","tip":"팁","lat":위도,"lng":경도}
           ]
         }
       ]
     }
   ],
   "tips": ["팁1","팁2","팁3","팁4","팁5"]
-}`;
+}
+
+마지막날 마지막 items에는 반드시 귀국 항공편을 포함하세요:
+{"type":"flight","label":"귀국 편 출발","from":"${retDepAp}","to":"${retArrAp}","departTime":"${retDepDate} ${retDepTime}","arriveTime":"${retArrDate} ${retArrTime}","note":"공항 2시간 전 도착 권장"}`;
 
   try{
     let response;
@@ -371,10 +572,10 @@ ${extra?'요청: '+extra:''}
     } else text=response?.text||JSON.stringify(response);
 
     const match=text.match(/\{[\s\S]*\}/);
-    if(!match)throw new Error('응답을 파싱할 수 없어요. 다시 시도해주세요.');
+    if(!match) throw new Error('응답 파싱 실패. 다시 시도해주세요.');
     tripData=JSON.parse(match[0]);
     setLoading(false);
-    renderResult(tripData,start,end,people,style,days);
+    renderResult(tripData,people,style);
   }catch(e){
     setLoading(false);
     document.getElementById('emptystate').style.display='flex';
@@ -382,14 +583,16 @@ ${extra?'요청: '+extra:''}
   }
 }
 
-const CAT_COLOR={관광:'#2563EB',식사:'#EA580C',숙소:'#7C3AED',쇼핑:'#DC2626',액티비티:'#16A34A'};
+const CAT_COLOR={관광:'#2563EB',식사:'#EA580C',숙소:'#7C3AED',쇼핑:'#DC2626',액티비티:'#16A34A',비행:'#0284C7',호텔:'#C9973A'};
 
-function renderResult(data,start,end,people,style,days){
+function renderResult(data,people,style){
   document.getElementById('emptystate').style.display='none';
-  document.getElementById('result').style.display='flex';
+  const r=document.getElementById('result');
+  r.style.display='flex';
 
-  // summary
-  const dateStr=start&&end?`${start.slice(5)}~${end.slice(5)}`:`${days}일`;
+  const arrDate=document.getElementById('arr-date').value;
+  const retDepDate=document.getElementById('ret-dep-date').value;
+  const dateStr=arrDate&&retDepDate?`${arrDate.slice(5)}~${retDepDate.slice(5)}`:`${data.days.length}일`;
   document.getElementById('summaryGrid').innerHTML=`
     <div class="s-chip"><div class="v">${data.destination}</div><div class="k">목적지</div></div>
     <div class="s-chip"><div class="v">${dateStr}</div><div class="k">일정</div></div>
@@ -415,47 +618,41 @@ function showDayOnMap(data,dayIdx){
   mapMarkers=[];mapLines=[];
   const day=data.days[dayIdx];
   if(!day)return;
+  document.getElementById('maplabel').textContent=`Day ${day.day}${day.title?' — '+day.title:''}`;
 
-  document.getElementById('maplabel').textContent=`Day ${day.day} — ${day.title}`;
-
-  // collect all latlngs in order
-  const points=[];
-  let num=1;
+  const points=[];let num=1;
   day.items.forEach(item=>{
     if(item.type==='place'&&item.lat&&item.lng){
       points.push({lat:item.lat,lng:item.lng,label:String(num++),name:item.name,color:CAT_COLOR[item.category]||'#6B7280',desc:item.description,time:item.time,cat:item.category});
+    } else if(item.type==='hotel'&&item.lat&&item.lng){
+      points.push({lat:item.lat,lng:item.lng,label:'🏨',name:item.name,color:'#C9973A',desc:item.location,time:item.time,cat:'호텔'});
     } else if(item.type==='meal'){
-      const sel=(item.options||[]).find(o=>o._selected)||(item.options||[])[0];
-      if(sel&&sel.lat&&sel.lng) points.push({lat:sel.lat,lng:sel.lng,label:'🍽',name:sel.name,color:'#EA580C',desc:sel.description,time:item.time,cat:'식사'});
+      const sel=(item.options||[]).find(o=>o._sel)||(item.options||[])[0];
+      if(sel?.lat&&sel?.lng) points.push({lat:sel.lat,lng:sel.lng,label:'🍽',name:sel.name,color:'#EA580C',desc:sel.description,time:item.time,cat:'식사'});
     }
   });
 
   if(points.length>1){
-    const line=L.polyline(points.map(p=>[p.lat,p.lng]),{color:'#1B4332',weight:2,opacity:0.45,dashArray:'6,4'}).addTo(leafletMap);
-    mapLines.push(line);
+    const l=L.polyline(points.map(p=>[p.lat,p.lng]),{color:'#1B4332',weight:2,opacity:0.4,dashArray:'6,4'}).addTo(leafletMap);
+    mapLines.push(l);
   }
   points.forEach(p=>{
-    const icon=L.divIcon({className:'',html:`<div style="min-width:26px;height:26px;background:${p.color};border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;box-shadow:0 2px 5px rgba(0,0,0,0.25);padding:0 4px">${p.label}</div>`,iconSize:[26,26],iconAnchor:[13,13]});
+    const icon=L.divIcon({className:'',html:`<div style="min-width:26px;height:26px;background:${p.color};border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;box-shadow:0 2px 5px rgba(0,0,0,0.22);padding:0 4px">${p.label}</div>`,iconSize:[26,26],iconAnchor:[13,13]});
     const m=L.marker([p.lat,p.lng],{icon}).addTo(leafletMap)
-      .bindPopup(`<b style="font-size:13px">${p.name}</b><br><span style="color:#999;font-size:11px">${p.time||''} · ${p.cat}</span><br><p style="font-size:12px;margin-top:4px;color:#444;max-width:180px">${(p.desc||'').slice(0,80)}${(p.desc||'').length>80?'...':''}</p>`);
+      .bindPopup(`<b style="font-size:13px">${p.name}</b><br><span style="color:#999;font-size:11px">${p.time||''} · ${p.cat}</span><br><p style="font-size:11px;margin-top:3px;color:#555;max-width:180px">${(p.desc||'').slice(0,90)}${(p.desc||'').length>90?'...':''}</p>`);
     mapMarkers.push(m);
   });
-
-  if(points.length>1){
-    const grp=L.featureGroup(mapMarkers);
-    leafletMap.fitBounds(grp.getBounds().pad(0.18));
-  } else if(points.length===1){
-    leafletMap.setView([points[0].lat,points[0].lng],15);
-  }
+  if(points.length>1){leafletMap.fitBounds(L.featureGroup(mapMarkers).getBounds().pad(0.18))}
+  else if(points.length===1){leafletMap.setView([points[0].lat,points[0].lng],15)}
 }
 
 function renderTabs(data){
-  const tabs=document.getElementById('tabs');
-  tabs.innerHTML='';
+  const tabs=document.getElementById('tabs');tabs.innerHTML='';
   data.days.forEach((day,i)=>{
     const t=document.createElement('button');
     t.className='tab'+(i===0?' active':'');
-    t.textContent=`Day ${day.day}`;
+    t.innerHTML=`Day ${day.day}${day.date?`<br><span style="font-size:0.6rem;opacity:0.7">${day.date.slice(5)}</span>`:''}`;
+    t.style.lineHeight='1.3';
     t.onclick=()=>switchDay(i);
     tabs.appendChild(t);
   });
@@ -472,38 +669,86 @@ function renderTimeline(data,dayIdx){
   const day=data.days[dayIdx];
   const tl=document.getElementById('timeline');
   if(!day){tl.innerHTML='';return}
-
   const items=day.items||[];
   let html='<div class="timeline">';
   let placeNum=1;
-  const total=items.length;
 
   items.forEach((item,idx)=>{
-    const isLast=idx===total-1;
+    const isLast=idx===items.length-1;
+    const needLine=!isLast;
 
-    if(item.type==='place'){
+    if(item.type==='flight'){
+      html+=`<div class="tl-row">
+        <div class="dot-col">
+          <div class="dot" style="background:#0284C7">✈</div>
+          ${needLine?'<div class="dot-line"></div>':''}
+        </div>
+        <div class="tl-body">
+          <div style="font-size:0.88rem;font-weight:600;margin-bottom:0.25rem">${item.label||'항공편'}</div>
+          <div class="flight-item">
+            <div class="fi-route">
+              <span>${item.from}</span>
+              <span class="fi-arrow">→</span>
+              <span>${item.to}</span>
+            </div>
+            <div class="fi-meta">
+              <span class="fi-tag">✈ 출발 ${item.departTime||''}</span>
+              <span class="fi-tag">🛬 도착 ${item.arriveTime||''}</span>
+              ${item.note?`<span class="fi-tag">💡 ${item.note}</span>`:''}
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    else if(item.type==='hotel'){
+      html+=`<div class="tl-row">
+        <div class="dot-col">
+          <div class="dot" style="background:#C9973A">🏨</div>
+          ${needLine?'<div class="dot-line"></div>':''}
+        </div>
+        <div class="tl-body">
+          <div class="place-header" onclick="toggleDetail('h${dayIdx}-${idx}',this)">
+            <span class="place-time">${item.time||''}</span>
+            <span class="place-name">${item.action||'체크인'} — ${item.name}</span>
+            <span class="badge" style="background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border)">숙소</span>
+            <span class="chevron">▼</span>
+          </div>
+          <div class="place-detail" id="h${dayIdx}-${idx}">
+            <div class="hotel-item">
+              <div class="hi-name">${item.name}</div>
+              <div class="hi-meta">
+                <span class="hi-tag">📍 ${item.location||''}</span>
+                ${item.tip?`<span class="hi-tag">💡 ${item.tip}</span>`:''}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    else if(item.type==='place'){
       const color=CAT_COLOR[item.category]||'#6B7280';
       const n=placeNum++;
-      html+=`
-      <div class="place-row">
-        <div class="place-dot-col">
-          <div class="place-dot" style="background:${color}">${n}</div>
-          ${!isLast?'<div class="dot-line"></div>':''}
+      html+=`<div class="tl-row">
+        <div class="dot-col">
+          <div class="dot" style="background:${color}">${n}</div>
+          ${needLine?'<div class="dot-line"></div>':''}
         </div>
-        <div class="place-body">
-          <div class="place-header" onclick="toggleDetail('d${dayIdx}-${idx}',this)">
+        <div class="tl-body">
+          <div class="place-header" onclick="toggleDetail('p${dayIdx}-${idx}',this)">
             <span class="place-time">${item.time||''}</span>
             <span class="place-name">${item.name}</span>
-            <span class="place-badge"><span class="badge badge-${item.category}">${item.category}</span></span>
-            <span class="expand-icon">▼</span>
+            <span class="badge badge-${item.category}">${item.category}</span>
+            <span class="chevron">▼</span>
           </div>
-          <div class="place-detail" id="d${dayIdx}-${idx}">
+          <div class="place-detail" id="p${dayIdx}-${idx}">
             <div class="detail-desc">${item.description||''}</div>
             <div class="detail-meta">
-              ${item.duration?`<div class="meta-item">⏱ <strong>${item.duration}</strong></div>`:''}
-              ${item.hours?`<div class="meta-item">🕐 <strong>${item.hours}</strong></div>`:''}
-              ${item.price?`<div class="meta-item">💴 <strong>${item.price}</strong></div>`:''}
-              ${item.tip?`<div class="meta-item" style="width:100%;margin-top:2px">💡 ${item.tip}</div>`:''}
+              ${item.duration?`<div class="mi">⏱ <strong>${item.duration}</strong></div>`:''}
+              ${item.hours?`<div class="mi">🕐 <strong>${item.hours}</strong></div>`:''}
+              ${item.price?`<div class="mi">💴 <strong>${item.price}</strong></div>`:''}
+              ${item.tip?`<div class="mi" style="width:100%;margin-top:2px">💡 ${item.tip}</div>`:''}
             </div>
           </div>
         </div>
@@ -511,50 +756,49 @@ function renderTimeline(data,dayIdx){
     }
 
     else if(item.type==='transport'){
-      const methodIcon={지하철:'🚇',버스:'🚌',도보:'🚶',택시:'🚕',기타:'🚌'}[item.method]||'🚌';
-      html+=`
-      <div class="transport-row">
-        <div class="transport-line-col"><div class="t-line"></div></div>
-        <div class="transport-body">
-          <div class="transport-pill">
-            <span>${methodIcon}</span>
+      const icons={지하철:'🚇',버스:'🚌',도보:'🚶',택시:'🚕',공항철도:'🚆',기타:'🚌'};
+      const icon=icons[item.method]||'🚌';
+      html+=`<div class="tr-row">
+        <div class="tr-line-col"><div class="tr-vline"></div></div>
+        <div class="tr-body">
+          <div class="tr-pill">
+            <span>${icon}</span>
             <span class="method">${item.method}</span>
             <span>${item.duration||''}</span>
             ${item.cost&&item.cost!=='무료'?`<span>· ${item.cost}</span>`:''}
           </div>
-          ${item.detail?`<div class="transport-detail">${item.detail}</div>`:''}
+          ${item.detail?`<div class="tr-detail">${item.detail}</div>`:''}
         </div>
       </div>`;
     }
 
     else if(item.type==='meal'){
       const opts=item.options||[];
-      html+=`
-      <div class="place-row">
-        <div class="place-dot-col">
-          <div class="place-dot" style="background:#EA580C">🍽</div>
-          ${!isLast?'<div class="dot-line"></div>':''}
+      html+=`<div class="tl-row">
+        <div class="dot-col">
+          <div class="dot" style="background:#EA580C">🍽</div>
+          ${needLine?'<div class="dot-line"></div>':''}
         </div>
-        <div class="place-body">
-          <div class="place-header" onclick="toggleDetail('m${dayIdx}-${idx}',this)">
+        <div class="tl-body">
+          <div class="place-header" onclick="toggleDetail('meal${dayIdx}-${idx}',this)">
             <span class="place-time">${item.time||''}</span>
             <span class="place-name">${item.mealType||'식사'} — 맛집 선택</span>
-            <span class="place-badge"><span class="badge badge-식사">식사</span></span>
-            <span class="expand-icon">▼</span>
+            <span class="badge badge-식사">식사</span>
+            <span class="chevron">▼</span>
           </div>
-          <div class="place-detail open" id="m${dayIdx}-${idx}">
-            <div style="padding:0.5rem 0.85rem 0.3rem;font-size:0.75rem;color:var(--muted)">원하는 맛집을 선택하세요 👇</div>
+          <div class="place-detail open" id="meal${dayIdx}-${idx}">
+            <div class="meal-opts-label">원하는 맛집을 선택하세요 👇</div>
             <div class="resto-grid">
               ${opts.map((o,oi)=>`
-              <div class="resto-card ${oi===0?'selected':''}" onclick="selectResto(this,'m${dayIdx}-${idx}')" data-idx="${oi}">
-                <div class="rc-name">${o.name}</div>
-                <div class="rc-genre">${o.genre||''}</div>
-                <div class="rc-desc">${o.description||''}</div>
-                <div class="rc-meta">
-                  <span class="rc-tag price">${o.price||''}</span>
-                  ${o.waitTime?`<span class="rc-tag">${o.waitTime}</span>`:''}
+              <div class="rc ${oi===0?'sel':''}" onclick="selectResto(this)">
+                <div class="rn">${o.name}</div>
+                <div class="rg">${o.genre||''}</div>
+                <div class="rd">${o.description||''}</div>
+                <div class="rc-tags">
+                  ${o.price?`<span class="rc-tag price">${o.price}</span>`:''}
+                  ${o.waitTime?`<span class="rc-tag wait">${o.waitTime}</span>`:''}
                 </div>
-                ${o.tip?`<div style="margin-top:5px;font-size:0.68rem;color:var(--muted)">💡 ${o.tip}</div>`:''}
+                ${o.tip?`<div class="rt">💡 ${o.tip}</div>`:''}
               </div>`).join('')}
             </div>
           </div>
@@ -568,25 +812,28 @@ function renderTimeline(data,dayIdx){
 }
 
 function toggleDetail(id,header){
-  const el=document.getElementById(id);
-  if(!el)return;
+  const el=document.getElementById(id);if(!el)return;
   const open=el.classList.toggle('open');
   header.classList.toggle('expanded',open);
 }
-
-function selectResto(card,mealId){
-  const grid=card.closest('.resto-grid');
-  grid.querySelectorAll('.resto-card').forEach(c=>c.classList.remove('selected'));
-  card.classList.add('selected');
-  // update map
-  showDayOnMap(tripData,currentDay);
+function selectResto(card){
+  card.closest('.resto-grid').querySelectorAll('.rc').forEach(c=>c.classList.remove('sel'));
+  card.classList.add('sel');
 }
 
-// init dates
+// ── INIT DATES ──
 (()=>{
-  const t=new Date(),n=new Date(t);n.setDate(t.getDate()+30);
-  document.getElementById('startdate').value=t.toISOString().slice(0,10);
-  document.getElementById('enddate').value=n.toISOString().slice(0,10);
+  const t=new Date();
+  const arr=new Date(t);arr.setDate(t.getDate()+30);
+  const ret=new Date(arr);ret.setDate(arr.getDate()+3);
+  document.getElementById('dep-date').value=t.toISOString().slice(0,10);
+  document.getElementById('arr-date').value=arr.toISOString().slice(0,10);
+  document.getElementById('ret-dep-date').value=ret.toISOString().slice(0,10);
+  document.getElementById('ret-arr-date').value=ret.toISOString().slice(0,10);
+  document.getElementById('dep-ap').value='인천 (ICN)';
+  document.getElementById('arr-ap').value='간사이 (KIX)';
+  document.getElementById('ret-dep-ap').value='간사이 (KIX)';
+  document.getElementById('ret-arr-ap').value='인천 (ICN)';
 })();
 </script>
 </body>
